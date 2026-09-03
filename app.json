@@ -2,11 +2,11 @@
   "expo": {
     "name": "Tanposh",
     "slug": "Tanposh",
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0B1F3A"
-    },
+    // "splash": {
+    //   "image": "./assets/images/splash.png",
+    //   "resizeMode": "contain",
+    //   "backgroundColor": "#0B1F3A"
+    // },
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

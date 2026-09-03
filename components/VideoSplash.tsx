@@ -43,6 +43,8 @@ const styles = StyleSheet.create({
   },
   video: {
     width: "100%",
-    height: "100%",
+    height: "90%",
+    alignSelf: "center",
+    margin: 60,
   },
 });
