@@ -1,12 +1,13 @@
 import InputField from "@/components/inputField";
 import MainButton from "@/components/MainButton ";
 import { theme } from "@/styles/theme";
+import { saveUser } from "@/Utils/authStorage";
+import { useLoading } from "@/Utils/loading";
 import { Spacer10, Spacer30 } from "@/Utils/spacing";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import Checkbox from "expo-checkbox";
+import { Checkbox } from "expo-checkbox";
 import { router, Stack } from "expo-router";
 import React, { useState } from "react";
-
 import {
   KeyboardAvoidingView,
   Platform,
@@ -16,52 +17,172 @@ import {
   Text,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 
 const SignUp = () => {
   const [isChecked, setIsChecked] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [firstNameError, setFirstNameError] = useState("");
+  const [lastNameError, setLastNameError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+  const [termsError, setTermsError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
+
+  const { loading, setLoading } = useLoading();
+
+  const handleSignUp = async () => {
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    const trimmedPhone = phone.trim();
+
+    const errors = {
+      firstName: trimmedFirstName ? "" : "First name is required",
+      lastName: trimmedLastName ? "" : "Last name is required",
+      phone: trimmedPhone ? "" : "Phone number is required",
+      password: !password
+        ? "Password is required"
+        : password.length < 8
+          ? "Password must be at least 8 characters"
+          : "",
+      confirmPassword: !confirmPassword
+        ? "Please confirm your password"
+        : password !== confirmPassword
+          ? "Passwords do not match"
+          : "",
+      terms: isChecked ? "" : "You must agree to the Terms and Conditions",
+    };
+
+    setFirstNameError(errors.firstName);
+    setLastNameError(errors.lastName);
+    setPhoneError(errors.phone);
+    setPasswordError(errors.password);
+    setConfirmPasswordError(errors.confirmPassword);
+    setTermsError(errors.terms);
+
+    if (Object.values(errors).some(Boolean)) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid input",
+        text2:
+          Object.values(errors).find(Boolean) ||
+          "Please check your information",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const user = {
+        First_Name: trimmedFirstName,
+        Last_Name: trimmedLastName,
+        phone: trimmedPhone,
+        password,
+      };
+      await saveUser(user);
+
+      Toast.show({
+        type: "success",
+        text1: "User Registred Successfully",
+        text2: "Use your phone number and password to start.",
+      });
+      console.log("Sign-up submitted", {
+        ...user,
+        password: password,
+        confirmPassword: confirmPassword,
+      });
+      setTimeout(() => {
+        router.replace("/(auth)/login");
+      }, 1000);
+    } catch (error) {
+      console.log("Signup error:", error);
+
+      Toast.show({
+        type: "error",
+        text1: "SignUp Failed",
+        text2: "Unable to create account. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 30 : 0}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
       <Stack.Screen options={{ title: "SignUp" }} />
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
         showsVerticalScrollIndicator={false}
       >
+        {/* Heading */}
         <View style={styles.heading}>
           <Text style={styles.title}>Tanposh</Text>
           <Text style={styles.subtitle}>Register yourself to Continue.</Text>
         </View>
+
         <Spacer30 />
+
+        {/* Form */}
         <View style={styles.form}>
           <InputField
             style={styles.input}
             label="First Name"
             placeholder="Enter your full name"
             autoComplete="name"
+            value={firstName}
+            onChangeText={(text) => {
+              setFirstName(text);
+              if (text.trim()) setFirstNameError("");
+            }}
           />
+          {firstNameError ? (
+            <Text style={styles.errorText}>{firstNameError}</Text>
+          ) : null}
+
           <InputField
             style={styles.input}
             label="Last Name"
             placeholder="Enter your last name"
+            value={lastName}
+            onChangeText={(text) => {
+              setLastName(text);
+              if (text.trim()) setLastNameError("");
+            }}
           />
+          {lastNameError ? (
+            <Text style={styles.errorText}>{lastNameError}</Text>
+          ) : null}
+
           <InputField
             style={styles.input}
             label="Phone"
             placeholder="Enter phone number"
-            keyboardType="numeric"
+            keyboardType="phone-pad"
+            value={phone}
+            onChangeText={(text) => {
+              setPhone(text);
+              if (text.trim()) setPhoneError("");
+            }}
           />
+          {phoneError ? (
+            <Text style={styles.errorText}>{phoneError}</Text>
+          ) : null}
+
+          {/* Password */}
           <View>
             <InputField
               style={styles.input}
@@ -88,7 +209,7 @@ const SignUp = () => {
 
             <Pressable
               style={styles.eyeButton}
-              onPress={() => setShowPassword(!showPassword)}
+              onPress={() => setShowPassword((prev) => !prev)}
             >
               <Ionicons
                 name={showPassword ? "eye-off-outline" : "eye-outline"}
@@ -101,6 +222,8 @@ const SignUp = () => {
               <Text style={styles.errorText}>{passwordError}</Text>
             ) : null}
           </View>
+
+          {/* Confirm Password */}
           <View>
             <InputField
               style={styles.input}
@@ -109,7 +232,9 @@ const SignUp = () => {
               onChangeText={(text) => {
                 setConfirmPassword(text);
 
-                if (text !== password) {
+                if (!text) {
+                  setConfirmPasswordError("Please confirm your password");
+                } else if (text !== password) {
                   setConfirmPasswordError("Passwords do not match");
                 } else {
                   setConfirmPasswordError("");
@@ -121,7 +246,7 @@ const SignUp = () => {
 
             <Pressable
               style={styles.eyeButton}
-              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              onPress={() => setShowConfirmPassword((prev) => !prev)}
             >
               <Ionicons
                 name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
@@ -134,36 +259,30 @@ const SignUp = () => {
               <Text style={styles.errorText}>{confirmPasswordError}</Text>
             ) : null}
           </View>
-          {/* <InputField
-            style={styles.input}
-            label="Password"
-            placeholder="Enter Password"
-            secureTextEntry={true}
-          />
-          <InputField
-            style={styles.input}
-            label="Confirm Password"
-            placeholder="Re-enter Password"
-            secureTextEntry={true}
-          /> */}
+
           <Spacer10 />
+
+          {/* Checkbox */}
           <View style={styles.checkBoxView}>
             <Checkbox
               value={isChecked}
-              onValueChange={setIsChecked}
-              color={isChecked ? "#D4AF37" : "#666666"}
+              onValueChange={(value) => {
+                setIsChecked(value);
+                if (value) setTermsError("");
+              }}
+              color={isChecked ? theme.color.primary : theme.color.textLight}
             />
+
             <Text style={styles.checkBoxText}>
               I agree to the{" "}
               <Text style={styles.linkText}>Terms and Conditions.</Text>
             </Text>
           </View>
+          {termsError ? (
+            <Text style={styles.termsError}>{termsError}</Text>
+          ) : null}
         </View>
-        <MainButton
-          title="Sign Up"
-          onPress={() => console.log("User created")}
-          loading={false}
-        />
+        <MainButton title="Sign Up" onPress={handleSignUp} loading={loading} />
         <Spacer10 />
         <Text style={styles.loginText}>
           Already have an account?{" "}
@@ -171,7 +290,7 @@ const SignUp = () => {
             style={styles.linkText}
             onPress={() => router.push("/(auth)/login")}
           >
-            logIn
+            Log In
           </Text>
         </Text>
       </ScrollView>
@@ -185,36 +304,52 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.color.background,
-    // marginHorizontal: 10,
   },
-  input: {
-    marginBottom: 15,
+
+  scrollView: {
+    flex: 1,
   },
-  form: {
-    width: "100%",
-    paddingHorizontal: 0,
+
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 25,
+    paddingBottom: 40,
   },
+
   heading: {
-    // backgroundColor: "lightblue",
     marginBottom: 10,
   },
+
   title: {
     fontSize: theme.font.size.display,
     fontWeight: theme.font.weight.extraBold,
     textAlign: "center",
     color: theme.color.textGold,
   },
+
   subtitle: {
     textAlign: "center",
     color: theme.color.secondaryLight,
     fontSize: theme.font.size.small,
     fontWeight: theme.font.weight.regular,
   },
+
+  form: {
+    width: "100%",
+  },
+
+  input: {
+    marginBottom: 15,
+  },
+
   eyeButton: {
     position: "absolute",
     right: 15,
     top: 30,
+    padding: 5,
   },
+
   errorText: {
     color: theme.color.error,
     fontSize: 12,
@@ -222,18 +357,28 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginLeft: 5,
   },
+
   checkBoxView: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    marginTop: 0,
-    left: 5,
+    marginLeft: 5,
   },
+
   checkBoxText: {
+    flex: 1,
     fontSize: theme.font.size.small,
     fontWeight: theme.font.weight.regular,
     color: theme.color.secondaryLight,
   },
+
+  termsError: {
+    color: theme.color.error,
+    fontSize: 12,
+    marginTop: theme.spacing.small,
+    marginLeft: 5,
+  },
+
   linkText: {
     fontSize: theme.font.size.small,
     fontWeight: theme.font.weight.semiBold,
@@ -242,13 +387,5 @@ const styles = StyleSheet.create({
   loginText: {
     textAlign: "center",
     color: theme.color.textLight,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 10,
-    paddingTop: 80, // moves heading down
-    paddingBottom: 30,
   },
 });

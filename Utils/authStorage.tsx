@@ -7,7 +7,8 @@ export type User = {
   id?: string;
   First_Name: string;
   Last_Name: string;
-  phone: string | number;
+  phone: string;
+  password: string;
 };
 
 // Save user information
@@ -32,6 +33,23 @@ export const getUser = async (): Promise<User | null> => {
   } catch (error) {
     console.log("Error getting user:", error);
     return null;
+  }
+};
+
+export const validateUser = async (
+  phone: string,
+  password: string,
+): Promise<boolean> => {
+  try {
+    const user = await getUser();
+    if (!user) {
+      return false;
+    }
+
+    return user.phone === phone && user.password === password;
+  } catch (error) {
+    console.log("Error validating user:", error);
+    return false;
   }
 };
 
