@@ -1,32 +1,31 @@
 import { theme } from "@/styles/theme";
 import { Stack } from "expo-router";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import MeasurementsScreen from "../measurement/new";
 
 const Measurements = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen
         options={{
-          headerShown: true,
           title: "Measurements",
+          headerShown: true,
           headerStyle: {
-            backgroundColor: "#0B1F3A",
+            backgroundColor: theme.color.secondaryLight,
           },
-          headerTintColor: "#D4AF37",
           headerTitleStyle: {
-            color: theme.color.primary,
+            color: theme.color.textWhite,
             fontSize: 20,
             fontWeight: "700",
           },
-
           headerTitleAlign: "center",
           headerShadowVisible: true,
         }}
       />
       <View style={styles.main}>
-        <Text>Heloo Measurements.</Text>
+        <MeasurementsScreen />
       </View>
     </SafeAreaView>
   );
@@ -39,7 +38,5 @@ const styles = StyleSheet.create({
   },
   main: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
 });

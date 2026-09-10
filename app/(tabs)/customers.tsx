@@ -16,7 +16,7 @@ const Customers = () => {
       <Stack.Screen
         options={{
           headerShown: true,
-          title: `Customers (${customerData.length})`,
+          title: "Customers",
           headerStyle: {
             backgroundColor: theme.color.secondaryLight,
           },

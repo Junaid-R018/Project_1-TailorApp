@@ -6,7 +6,7 @@ import PersonalInfo from "@/components/personalInfo";
 import { theme } from "@/styles/theme";
 import { customer } from "@/Utils/dummyDetails";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
 import {
   Dimensions,
@@ -126,8 +126,7 @@ export default function CustomerDetails() {
               style={styles.editButton}
               onPress={() => {
                 setModalVisible(false);
-                // Open edit measurements
-                // router.push("/measurements/edit");
+                router.push("/(tabs)/measurements");
               }}
             >
               <Ionicons
@@ -142,9 +141,7 @@ export default function CustomerDetails() {
               style={styles.modalButton}
               onPress={() => {
                 setModalVisible(false);
-
-                // Open new measurements screen
-                // router.push("/measurements/new");
+                router.push("/(tabs)/measurements");
               }}
             >
               <Ionicons

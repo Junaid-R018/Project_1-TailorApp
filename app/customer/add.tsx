@@ -2,10 +2,11 @@ import InputField from "@/components/inputField";
 import MainButton from "@/components/MainButton ";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -28,6 +29,7 @@ const AddCustomer = () => {
   const [showPicker, setShowPicker] = useState(false);
   const [advanceAmount, setAdvanceAmount] = useState("");
   const [notes, setNotes] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
 
   const handleDate = (event: any, selectedDate?: Date) => {
     setShowPicker(false);
@@ -51,7 +53,7 @@ const AddCustomer = () => {
               backgroundColor: theme.color.secondaryLight,
             },
             headerRight: () => (
-              <Pressable onPress={() => {}}>
+              <Pressable onPress={() => setModalVisible(true)}>
                 <Ionicons
                   name="ellipsis-vertical"
                   size={28}
@@ -149,6 +151,78 @@ const AddCustomer = () => {
                 onChangeText={setNotes}
               />
             </View>
+            <Modal
+              visible={modalVisible}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setModalVisible(false)}
+            >
+              <Pressable
+                style={styles.modalOverlay}
+                onPress={() => setModalVisible(false)}
+              >
+                <Pressable style={styles.bottomSheet}>
+                  <Text style={styles.modalTitle}>Edit Details</Text>
+                  <Pressable
+                    style={styles.editButton}
+                    onPress={() => {
+                      setModalVisible(false);
+                      router.push("/(tabs)/measurements");
+                    }}
+                  >
+                    <Text style={styles.buttonText}>Edit Measurements</Text>
+                    <Ionicons
+                      name="create-outline"
+                      size={22}
+                      color={theme.color.text}
+                    />
+                  </Pressable>
+                  <Pressable
+                    style={styles.new_measurements}
+                    onPress={() => {
+                      setModalVisible(false);
+                      router.push("/(tabs)/measurements");
+                    }}
+                  >
+                    <Text style={styles.buttonText}>New Measurements</Text>
+                    <Ionicons
+                      name="add-circle-outline"
+                      size={22}
+                      color={theme.color.text}
+                    />
+                  </Pressable>
+                  <Pressable
+                    style={styles.all_order}
+                    onPress={() => {
+                      setModalVisible(false);
+                      router.push("../orders");
+                    }}
+                  >
+                    <Text style={styles.buttonText}>All Orders</Text>
+                    <Ionicons
+                      name="receipt-outline"
+                      size={22}
+                      color={theme.color.text}
+                    />
+                  </Pressable>
+                  <Pressable
+                    style={styles.del_Button}
+                    onPress={() => {
+                      setModalVisible(false);
+                      // router.push("/(tabs)/measurements");
+                    }}
+                  >
+                    <Text style={styles.deletebutton}>Delete Customer</Text>
+
+                    <Ionicons
+                      name="trash-outline"
+                      size={22}
+                      color={theme.color.error}
+                    />
+                  </Pressable>
+                </Pressable>
+              </Pressable>
+            </Modal>
             <MainButton
               title="Save Customer"
               onPress={() => {}}
@@ -219,5 +293,71 @@ const styles = StyleSheet.create({
     marginTop: -10,
     marginBottom: 10,
     marginLeft: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+
+  bottomSheet: {
+    backgroundColor: theme.color.backgroundLight,
+    padding: 20,
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+  },
+  modalTitle: {
+    fontSize: theme.font.size.large,
+    fontWeight: "600",
+    textAlign: "center",
+    color: theme.color.text,
+    marginBottom: 20,
+  },
+  editButton: {
+    width: "100%",
+    height: 40,
+    borderBottomWidth: 0.5,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  new_measurements: {
+    width: "100%",
+    height: 40,
+    borderBottomWidth: 0.5,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  all_order: {
+    width: "100%",
+    height: 40,
+    borderBottomWidth: 0.5,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  del_Button: {
+    width: "100%",
+    height: 40,
+    borderBottomWidth: 0.5,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+
+  buttonText: {
+    color: theme.color.text,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  deletebutton: {
+    color: theme.color.error,
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
