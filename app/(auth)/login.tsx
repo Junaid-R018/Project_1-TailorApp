@@ -2,6 +2,7 @@ import InputField from "@/components/inputField";
 import MainButton from "@/components/MainButton ";
 import { theme } from "@/styles/theme";
 import { setLoginStatus, validateUser } from "@/Utils/authStorage";
+import { Spacer10 } from "@/Utils/spacing";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack } from "expo-router";
 import React, { useState } from "react";
@@ -71,8 +72,7 @@ const Login = () => {
         text2: "Welcome Back!",
       });
       console.log("Login successful");
-
-      router.replace("/(auth)/signup");
+      router.replace("/(tabs)/home");
     } catch (error) {
       console.error("Login error:", error);
       Toast.show({
@@ -101,8 +101,7 @@ const Login = () => {
       >
         <View style={styles.form}>
           <Text style={styles.title}>Welcome Back!</Text>
-
-          {/* Phone Number */}
+          <Spacer10 />
           <InputField
             label="Phone Number"
             value={number}
@@ -117,7 +116,6 @@ const Login = () => {
             <Text style={styles.fieldError}>{numberError}</Text>
           ) : null}
 
-          {/* Password */}
           <View style={styles.passwordContainer}>
             <InputField
               label="Password"
@@ -147,8 +145,6 @@ const Login = () => {
                 color={theme.color.textLight}
               />
             </Pressable>
-
-            {/* Error + Forget Password */}
             <View style={styles.passwordFooter}>
               {passwordError ? (
                 <Text style={styles.errorText}>{passwordError}</Text>
@@ -222,30 +218,25 @@ const styles = StyleSheet.create({
   fieldError: {
     color: theme.color.error,
     fontSize: 12,
-    marginTop: theme.spacing.small,
     marginLeft: 5,
   },
 
   eyeButton: {
     position: "absolute",
-    right: 15,
-    top: 30,
-    padding: 5,
+    right: 12,
+    top: 18,
   },
 
   passwordFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 10,
     paddingHorizontal: 5,
-    minHeight: 20,
   },
 
   errorText: {
     color: theme.color.error,
     fontSize: 12,
-    flex: 1,
   },
 
   forgetPassword: {

@@ -128,15 +128,11 @@ const SignUp = () => {
         keyboardDismissMode="interactive"
         showsVerticalScrollIndicator={false}
       >
-        {/* Heading */}
         <View style={styles.heading}>
           <Text style={styles.title}>Tanposh</Text>
           <Text style={styles.subtitle}>Register yourself to Continue.</Text>
         </View>
-
         <Spacer30 />
-
-        {/* Form */}
         <View style={styles.form}>
           <InputField
             style={styles.input}
@@ -181,8 +177,6 @@ const SignUp = () => {
           {phoneError ? (
             <Text style={styles.errorText}>{phoneError}</Text>
           ) : null}
-
-          {/* Password */}
           <View>
             <InputField
               style={styles.input}
@@ -222,8 +216,6 @@ const SignUp = () => {
               <Text style={styles.errorText}>{passwordError}</Text>
             ) : null}
           </View>
-
-          {/* Confirm Password */}
           <View>
             <InputField
               style={styles.input}
@@ -261,8 +253,6 @@ const SignUp = () => {
           </View>
 
           <Spacer10 />
-
-          {/* Checkbox */}
           <View style={styles.checkBoxView}>
             <Checkbox
               value={isChecked}
@@ -345,17 +335,14 @@ const styles = StyleSheet.create({
 
   eyeButton: {
     position: "absolute",
-    right: 15,
-    top: 30,
-    padding: 5,
+    right: 12,
+    top: 16,
   },
 
   errorText: {
     color: theme.color.error,
     fontSize: 12,
-    marginTop: -10,
-    marginBottom: 10,
-    marginLeft: 5,
+    top: -10,
   },
 
   checkBoxView: {

@@ -35,7 +35,7 @@ export const getUser = async (): Promise<User | null> => {
     return null;
   }
 };
-
+// Vlidate user
 export const validateUser = async (
   phone: string,
   password: string,
@@ -66,10 +66,31 @@ export const setLoginStatus = async (status: boolean) => {
 export const getLoginStatus = async (): Promise<boolean> => {
   try {
     const status = await AsyncStorage.getItem(LOGIN_KEY);
-
     return status === "true";
   } catch (error) {
     console.log("Error getting login status:", error);
+    return false;
+  }
+};
+// update password
+
+export const updatePassword = async (newPassword: string) => {
+  try {
+    const user = await getUser();
+    if (!user) {
+      return false;
+    }
+
+    const updateUser = {
+      ...user,
+      password: newPassword,
+    };
+
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(updateUser));
+
+    return true;
+  } catch (error) {
+    console.log("Error in updating password", error);
     return false;
   }
 };

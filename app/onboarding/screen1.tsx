@@ -46,7 +46,7 @@ export default function OnboardingScreen() {
       return;
     }
 
-    router.replace("/(auth)/login");
+    router.replace("/(tabs)/home");
   };
 
   const renderItem = ({ item }: { item: (typeof slides)[number] }) => (
@@ -57,6 +57,12 @@ export default function OnboardingScreen() {
 
   return (
     <View style={styles.container}>
+      <Pressable
+        style={styles.skipButton}
+        onPress={() => router.replace("/(tabs)/home")}
+      >
+        <Text style={styles.skipText}>Skip</Text>
+      </Pressable>
       <FlatList
         ref={flatListRef}
         data={slides}
@@ -137,5 +143,21 @@ const styles = StyleSheet.create({
   },
   activeDot: {
     width: 24,
+  },
+  skipButton: {
+    position: "absolute",
+    top: 50,
+    left: 20,
+    zIndex: 20,
+    padding: 10,
+    borderWidth: 1,
+    borderRadius: theme.radius.medium,
+    borderColor: theme.color.primary,
+  },
+
+  skipText: {
+    color: theme.color.textGold,
+    fontSize: theme.font.size.large,
+    fontWeight: theme.font.weight.extraBold,
   },
 });

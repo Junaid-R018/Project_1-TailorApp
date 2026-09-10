@@ -1,6 +1,7 @@
 import InputField from "@/components/inputField";
 import MainButton from "@/components/MainButton ";
 import { theme } from "@/styles/theme";
+import { updatePassword } from "@/Utils/authStorage";
 import { useLoading } from "@/Utils/loading";
 import { Spacer20 } from "@/Utils/spacing";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -15,6 +16,7 @@ import {
   Text,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 
 const ForgetPasswordScreen = () => {
   const [password, setPassword] = useState("");
@@ -26,8 +28,15 @@ const ForgetPasswordScreen = () => {
   const { loading, setLoading } = useLoading();
 
   const handleChangePassword = async () => {
+    setPasswordError("");
+    setConfirmPasswordError("");
+
     if (!password) {
       setPasswordError("Password is required");
+      Toast.show({
+        type: "error",
+        text1: "Password is required",
+      });
       return;
     }
 
@@ -38,24 +47,52 @@ const ForgetPasswordScreen = () => {
 
     if (!confirmPassword) {
       setConfirmPasswordError("Please confirm your password");
+      Toast.show({
+        type: "error",
+        text1: "Confirm password is required",
+      });
       return;
     }
 
     if (password !== confirmPassword) {
       setConfirmPasswordError("Passwords do not match");
+      Toast.show({
+        type: "error",
+        text1: "Something went wrong.",
+        text2: "Invalid phone number or password",
+      });
       return;
     }
 
     try {
       setLoading(true);
-      console.log("Password reset submitted", {
-        password: password,
-        confirmPassword: confirmPassword,
+
+      const updated = await updatePassword(password);
+
+      if (!updated) {
+        Toast.show({
+          type: "error",
+          text1: "Password reset failed",
+          text2: "User not found. Please try again.",
+        });
+        return;
+      }
+
+      Toast.show({
+        type: "success",
+        text1: "Password changed successfully",
+        text2: "Please login with your new password.",
       });
 
       router.replace("/(auth)/login");
     } catch (error) {
       console.error("Change password error:", error);
+
+      Toast.show({
+        type: "error",
+        text1: "Something went wrong",
+        text2: "Unable to change your password. Please try again.",
+      });
     } finally {
       setLoading(false);
     }
@@ -77,10 +114,9 @@ const ForgetPasswordScreen = () => {
       >
         <View style={styles.form}>
           <Text style={styles.title}>Reset Password</Text>
-          <View>
+          <View style={styles.inputContainer}>
             <InputField
-              style={styles.input}
-              label="Password"
+              label="New Password"
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
@@ -118,7 +154,6 @@ const ForgetPasswordScreen = () => {
           </View>
           <View>
             <InputField
-              style={styles.input}
               label="Confirm Password"
               value={confirmPassword}
               onChangeText={(text) => {
@@ -175,7 +210,6 @@ const styles = StyleSheet.create({
   },
 
   form: {
-    flex: 1,
     width: "100%",
     paddingHorizontal: theme.spacing.medium,
     paddingTop: 60,
@@ -190,22 +224,19 @@ const styles = StyleSheet.create({
     color: theme.color.textGold,
   },
 
-  input: {
-    marginBottom: theme.spacing.small,
-  },
-
   eyeButton: {
     position: "absolute",
-    right: 15,
-    top: 30,
-    padding: 5,
+    right: 12,
+    top: 18,
+  },
+  inputContainer: {
+    marginBottom: 15,
   },
 
   errorText: {
+    marginBottom: 8,
     color: theme.color.error,
     fontSize: 12,
-    marginTop: -5,
-    marginBottom: theme.spacing.small,
     marginLeft: 5,
   },
   scrollContent: {
