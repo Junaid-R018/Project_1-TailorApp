@@ -1,14 +1,17 @@
+import { useLanguage } from "@/app/context/LanguageContext";
+import { useTheme } from "@/app/context/ThemeContext";
 import CustomerHeader from "@/components/customerHeader";
 import CustomerTabs from "@/components/customerTabs";
 import Measurements from "@/components/measurements";
 import Orders from "@/components/orders";
 import PersonalInfo from "@/components/personalInfo";
+import { Customer, getCustomerById } from "@/sqliteDB/customer";
 import { theme } from "@/styles/theme";
-import { customer } from "@/Utils/dummyDetails";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Modal,
@@ -22,152 +25,305 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const { width } = Dimensions.get("window");
 
 export default function CustomerDetails() {
+  const { colors } = useTheme();
+  const { t } = useLanguage();
+
   const [modalVisible, setModalVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+
+  const listRef = useRef<FlatList>(null);
 
   const { customerId } = useLocalSearchParams<{
     customerId: string;
   }>();
 
-  const selectedCustomer =
-    customer.find((item) => item.id.toString() === customerId) ?? customer[0];
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null,
+  );
 
-  const [activeTab, setActiveTab] = useState(0);
-  const listRef = useRef<FlatList>(null);
+  useEffect(() => {
+    const loadCustomer = async () => {
+      if (!customerId) return;
+
+      try {
+        const data = await getCustomerById(Number(customerId));
+
+        console.log("Selected Customer:", data);
+
+        setSelectedCustomer(data);
+      } catch (error) {
+        console.error("Failed to load customer:", error);
+      }
+    };
+
+    loadCustomer();
+  }, [customerId]);
+
+  // Loading state
+  if (!selectedCustomer) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            title: t("customerDetails"),
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: colors.secondaryLight,
+            },
+            headerTintColor: colors.textWhite,
+            headerTitleStyle: {
+              color: colors.textWhite,
+              fontSize: 20,
+              fontWeight: "700",
+            },
+            headerTitleAlign: "center",
+          }}
+        />
+
+        <SafeAreaView
+          style={[
+            styles.loadingContainer,
+            { backgroundColor: colors.background },
+          ]}
+          edges={["left", "right", "bottom"]}
+        >
+          <ActivityIndicator size="large" color={colors.primary} />
+
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+            {t("loading")}
+          </Text>
+        </SafeAreaView>
+      </>
+    );
+  }
 
   const handleTabPress = (index: number) => {
     setActiveTab(index);
+
     listRef.current?.scrollToIndex({
       index,
       animated: true,
     });
   };
 
+  // Swipe between tabs
   const handleSwipe = (event: any) => {
     const offsetX = event.nativeEvent.contentOffset.x;
+
     const index = Math.round(offsetX / width);
+
     setActiveTab(index);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <>
       <Stack.Screen
         options={{
-          title: "Customer Details",
+          title: t("customerDetails"),
           headerShown: true,
+
           headerStyle: {
-            backgroundColor: theme.color.secondaryLight,
+            backgroundColor: colors.secondaryLight,
           },
-          headerRight: () => (
-            <Pressable onPress={() => setModalVisible(true)}>
-              <Ionicons
-                name="ellipsis-vertical"
-                size={28}
-                color={theme.color.textWhite}
-              />
-            </Pressable>
-          ),
-          headerTintColor: theme.color.textWhite,
+
+          headerTintColor: colors.textWhite,
+
           headerTitleStyle: {
-            color: theme.color.textWhite,
+            color: colors.textWhite,
             fontSize: 20,
             fontWeight: "700",
           },
+
           headerTitleAlign: "center",
+
+          headerRight: () => (
+            <Pressable
+              onPress={() => setModalVisible(true)}
+              style={styles.headerButton}
+            >
+              <Ionicons
+                name="ellipsis-vertical"
+                size={24}
+                color={colors.textWhite}
+              />
+            </Pressable>
+          ),
+
           headerShadowVisible: true,
         }}
       />
-      <CustomerHeader customer={selectedCustomer} />
-      <CustomerTabs activeTab={activeTab} onTabPress={handleTabPress} />
-      <FlatList
-        ref={listRef}
-        data={[0, 1, 2]}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.toString()}
-        onMomentumScrollEnd={handleSwipe}
-        renderItem={({ item }) => {
-          if (item === 0) {
-            return (
-              <View style={styles.page}>
-                <PersonalInfo customer={selectedCustomer} />
-              </View>
-            );
-          }
 
-          if (item === 1) {
-            return (
-              <View style={styles.page}>
-                <Measurements customer={selectedCustomer} />
-              </View>
-            );
-          }
-
-          return (
-            <View style={styles.page}>
-              <Orders customer={selectedCustomer} />
-            </View>
-          );
-        }}
-      />
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        edges={["left", "right", "bottom"]}
       >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setModalVisible(false)}
-        >
-          <Pressable style={styles.bottomSheet}>
-            <Text style={styles.modalTitle}>Edit Details</Text>
-            <Pressable
-              style={styles.editButton}
-              onPress={() => {
-                setModalVisible(false);
-                router.push("/(tabs)/measurements");
-              }}
-            >
-              <Ionicons
-                name="create-outline"
-                size={22}
-                color={theme.color.textWhite}
-              />
+        <CustomerHeader customer={selectedCustomer} />
 
-              <Text style={styles.buttonText}>Edit Measurements</Text>
-            </Pressable>
+        <CustomerTabs activeTab={activeTab} onTabPress={handleTabPress} />
+
+        <View style={styles.content}>
+          <FlatList
+            ref={listRef}
+            data={[0, 1, 2]}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.toString()}
+            onMomentumScrollEnd={handleSwipe}
+            getItemLayout={(_, index) => ({
+              length: width,
+              offset: width * index,
+              index,
+            })}
+            renderItem={({ item }) => {
+              if (item === 0) {
+                return (
+                  <View style={styles.page}>
+                    <PersonalInfo customer={selectedCustomer} />
+                  </View>
+                );
+              }
+
+              if (item === 1) {
+                return (
+                  <View style={styles.page}>
+                    <Measurements customer={selectedCustomer} />
+                  </View>
+                );
+              }
+
+              return (
+                <View style={styles.page}>
+                  <Orders customer={selectedCustomer} />
+                </View>
+              );
+            }}
+          />
+        </View>
+
+        <Modal
+          visible={modalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <Pressable
+            style={styles.modalOverlay}
+            onPress={() => setModalVisible(false)}
+          >
             <Pressable
-              style={styles.modalButton}
-              onPress={() => {
-                setModalVisible(false);
-                router.push("/(tabs)/measurements");
-              }}
+              style={[
+                styles.bottomSheet,
+                {
+                  backgroundColor: colors.backgroundLight,
+                },
+              ]}
+              onPress={(event) => event.stopPropagation()}
             >
-              <Ionicons
-                name="add-circle-outline"
-                size={22}
-                color={theme.color.textWhite}
-              />
-              <Text style={styles.buttonText}>Add New Measurements</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>
+                {t("editDetails")}
+              </Text>
+
+              {/* Edit Measurements */}
+              <Pressable
+                style={[
+                  styles.modalButton,
+                  {
+                    backgroundColor: colors.secondaryLight,
+                    borderColor: colors.primary,
+                  },
+                ]}
+                onPress={() => {
+                  setModalVisible(false);
+
+                  router.push({
+                    pathname: "/measurement/new",
+                    params: {
+                      customerId: selectedCustomer.id.toString(),
+                      mode: "edit",
+                    },
+                  });
+                }}
+              >
+                <Ionicons
+                  name="create-outline"
+                  size={22}
+                  color={colors.textWhite}
+                />
+
+                <Text style={[styles.buttonText, { color: colors.textWhite }]}>
+                  {t("editMeasurement")}
+                </Text>
+              </Pressable>
+
+              {/* Add New Measurements */}
+              <Pressable
+                style={[
+                  styles.modalButton,
+                  {
+                    backgroundColor: colors.secondaryLight,
+                    borderColor: colors.primary,
+                  },
+                ]}
+                onPress={() => {
+                  setModalVisible(false);
+
+                  router.push({
+                    pathname: "/measurement/new",
+                    params: {
+                      customerId: selectedCustomer.id.toString(),
+                      mode: "new",
+                    },
+                  });
+                }}
+              >
+                <Ionicons
+                  name="add-circle-outline"
+                  size={22}
+                  color={colors.textWhite}
+                />
+
+                <Text style={[styles.buttonText, { color: colors.textWhite }]}>
+                  {t("addMeasurement")}
+                </Text>
+              </Pressable>
             </Pressable>
           </Pressable>
-        </Pressable>
-      </Modal>
-    </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.color.background,
+  },
+
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  loadingText: {
+    fontSize: 16,
+    marginTop: 10,
+  },
+
+  headerButton: {
+    paddingHorizontal: 4,
+  },
+
+  content: {
+    flex: 1,
   },
 
   page: {
     width,
     flex: 1,
   },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -175,40 +331,25 @@ const styles = StyleSheet.create({
   },
 
   bottomSheet: {
-    backgroundColor: theme.color.backgroundLight,
     padding: 20,
+    paddingBottom: 30,
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
   },
+
   modalTitle: {
     fontSize: theme.font.size.large,
     fontWeight: "600",
     textAlign: "center",
-    color: theme.color.text,
     marginBottom: 20,
   },
-  editButton: {
-    width: "100%",
-    height: 60,
-    backgroundColor: theme.color.secondaryLight,
-    borderRadius: theme.radius.round,
-    borderWidth: 2,
-    elevation: 4,
-    borderColor: theme.color.primary,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    marginBottom: 12,
-  },
+
   modalButton: {
     width: "100%",
     height: 60,
-    elevation: 4,
-    backgroundColor: theme.color.secondaryLight,
     borderRadius: theme.radius.round,
     borderWidth: 2,
-    borderColor: theme.color.primary,
+    elevation: 4,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -217,7 +358,6 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    color: theme.color.textWhite,
     fontSize: 16,
     fontWeight: "600",
   },

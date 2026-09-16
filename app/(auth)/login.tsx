@@ -1,7 +1,8 @@
 import InputField from "@/components/inputField";
 import MainButton from "@/components/MainButton ";
+import { validateUser } from "@/sqliteDB/auth";
 import { theme } from "@/styles/theme";
-import { setLoginStatus, validateUser } from "@/Utils/authStorage";
+import { setLoginStatus } from "@/Utils/authStorage";
 import { Spacer10 } from "@/Utils/spacing";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack } from "expo-router";
@@ -17,11 +18,19 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useLanguage } from "../context/LanguageContext";
+import { useTheme } from "../context/ThemeContext";
+
 const Login = () => {
+  const { colors } = useTheme();
+  const { t } = useLanguage();
+
   const [number, setNumber] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowpassword] = useState(false);
+
   const [numberError, setNumberError] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
@@ -30,10 +39,10 @@ const Login = () => {
 
     const phoneValidationError = trimmedNumber
       ? ""
-      : "Phone number is required";
+      : `${t("phoneNumber")} ${t("error")}`;
 
     const passwordValidationError = !password
-      ? "Password is required"
+      ? `${t("password")} ${t("error")}`
       : password.length < 8
         ? "Password must be at least 8 characters"
         : "";
@@ -44,9 +53,10 @@ const Login = () => {
     if (phoneValidationError || passwordValidationError) {
       Toast.show({
         type: "error",
-        text1: "Invalid input",
+        text1: t("error"),
         text2: phoneValidationError || passwordValidationError,
       });
+
       return;
     }
 
@@ -63,22 +73,28 @@ const Login = () => {
           text1: "Login Failed",
           text2: "Invalid phone number or password",
         });
+
         return;
       }
       await setLoginStatus(true);
+      await AsyncStorage.setItem("userPhone", trimmedNumber);
+
       Toast.show({
         type: "success",
-        text1: "User successfully Logged in",
-        text2: "Welcome Back!",
+        text1: t("success"),
+        text2: t("welcome"),
       });
+
       console.log("Login successful");
+
       router.replace("/(tabs)/home");
     } catch (error) {
       console.error("Login error:", error);
+
       Toast.show({
         type: "error",
-        text1: "Login Error",
-        text2: "Something went wrong, Please try again.",
+        text1: t("error"),
+        text2: t("somethingWentWrong"),
       });
     } finally {
       setLoading(false);
@@ -87,11 +103,38 @@ const Login = () => {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       keyboardVerticalOffset={Platform.OS === "ios" ? 30 : 0}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <Stack.Screen options={{ title: "Login" }} />
+      <Stack.Screen
+        options={{
+          title: t("login"),
+
+          headerShown: true,
+
+          headerStyle: {
+            backgroundColor: colors.secondaryLight,
+          },
+
+          headerTintColor: colors.textWhite,
+
+          headerTitleStyle: {
+            color: colors.textWhite,
+            fontSize: 20,
+            fontWeight: "700",
+          },
+
+          headerTitleAlign: "center",
+
+          headerShadowVisible: true,
+        }}
+      />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -100,25 +143,49 @@ const Login = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.form}>
-          <Text style={styles.title}>Welcome Back!</Text>
+          <Text
+            style={[
+              styles.title,
+              {
+                color: colors.textGold,
+              },
+            ]}
+          >
+            {t("welcome")}
+          </Text>
+
           <Spacer10 />
+
           <InputField
-            label="Phone Number"
+            label={t("phoneNumber")}
             value={number}
             onChangeText={(text) => {
               setNumber(text);
-              if (text.trim()) setNumberError("");
+
+              if (text.trim()) {
+                setNumberError("");
+              }
             }}
             placeholder="+92xxxxxxxx"
             keyboardType="numeric"
           />
+
           {numberError ? (
-            <Text style={styles.fieldError}>{numberError}</Text>
+            <Text
+              style={[
+                styles.fieldError,
+                {
+                  color: colors.error,
+                },
+              ]}
+            >
+              {numberError}
+            </Text>
           ) : null}
 
           <View style={styles.passwordContainer}>
             <InputField
-              label="Password"
+              label={t("password")}
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
@@ -129,7 +196,7 @@ const Login = () => {
                   setPasswordError("");
                 }
               }}
-              placeholder="Enter your password"
+              placeholder={t("password")}
               secureTextEntry={!showPassword}
               autoCapitalize="none"
               autoComplete="current-password"
@@ -142,39 +209,67 @@ const Login = () => {
               <Ionicons
                 name={showPassword ? "eye-off-outline" : "eye-outline"}
                 size={18}
-                color={theme.color.textLight}
+                color={colors.textSecondary}
               />
             </Pressable>
+
             <View style={styles.passwordFooter}>
               {passwordError ? (
-                <Text style={styles.errorText}>{passwordError}</Text>
+                <Text
+                  style={[
+                    styles.errorText,
+                    {
+                      color: colors.error,
+                    },
+                  ]}
+                >
+                  {passwordError}
+                </Text>
               ) : (
                 <View />
               )}
 
               <Pressable onPress={() => router.push("/(auth)/forget_password")}>
-                <Text style={styles.forgetPassword}>Forget password?</Text>
+                <Text
+                  style={[
+                    styles.forgetPassword,
+                    {
+                      color: colors.textSecondary,
+                    },
+                  ]}
+                >
+                  {t("forgotPassword")}
+                </Text>
               </Pressable>
             </View>
           </View>
 
-          {/* Login Button */}
           <View style={styles.button}>
             <MainButton
-              title="Log in"
+              title={t("login")}
               loading={loading}
               onPress={handleLogin}
             />
           </View>
-
-          {/* Sign Up */}
-          <Text style={styles.signupText}>
-            Don’t have an account?{" "}
+          <Text
+            style={[
+              styles.signupText,
+              {
+                color: colors.textLight,
+              },
+            ]}
+          >
+            {t("dontHaveAccount")}{" "}
             <Text
-              style={styles.linkText}
+              style={[
+                styles.linkText,
+                {
+                  color: colors.primary,
+                },
+              ]}
               onPress={() => router.push("/(auth)/signup")}
             >
-              Sign Up
+              {t("signup")}
             </Text>
           </Text>
         </View>
@@ -188,7 +283,6 @@ export default Login;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.color.background,
   },
 
   scrollContent: {
@@ -208,7 +302,6 @@ const styles = StyleSheet.create({
     fontSize: theme.font.size.display,
     fontWeight: theme.font.weight.extraBold,
     textAlign: "center",
-    color: theme.color.textGold,
   },
 
   passwordContainer: {
@@ -216,7 +309,6 @@ const styles = StyleSheet.create({
   },
 
   fieldError: {
-    color: theme.color.error,
     fontSize: 12,
     marginLeft: 5,
   },
@@ -235,12 +327,10 @@ const styles = StyleSheet.create({
   },
 
   errorText: {
-    color: theme.color.error,
     fontSize: 12,
   },
 
   forgetPassword: {
-    color: theme.color.textSecondary,
     fontSize: 12,
   },
 
@@ -250,12 +340,10 @@ const styles = StyleSheet.create({
 
   signupText: {
     textAlign: "center",
-    color: theme.color.textLight,
     marginTop: theme.spacing.large,
   },
 
   linkText: {
-    color: theme.color.primary,
     fontWeight: theme.font.weight.semiBold,
   },
 });

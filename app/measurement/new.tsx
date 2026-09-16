@@ -1,10 +1,17 @@
 import { measurementSections } from "@/Utils/measurementData";
+import { useLanguage } from "@/app/context/LanguageContext";
+import { useTheme } from "@/app/context/ThemeContext";
 import MainButton from "@/components/MainButton ";
 import InputField from "@/components/inputField";
+import {
+  addMeasurement,
+  getCustomerMeasurements,
+  updateMeasurement,
+} from "@/sqliteDB/measurement";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Stack, router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -30,15 +37,57 @@ measurementSections.forEach((section) => {
 });
 
 const MeasurementsScreen = () => {
-  const params = useLocalSearchParams();
+  const { colors } = useTheme();
+  const { t } = useLanguage();
+
+  const params = useLocalSearchParams<{
+    customerId: string;
+    measurementId?: string;
+    mode?: string;
+  }>();
+
+  const customerId = Number(params.customerId);
+
   const mode = params.mode === "new" ? "new" : "edit";
+
+  const measurementId = params.measurementId
+    ? Number(params.measurementId)
+    : null;
+
   const [unit, setUnit] = useState<Unit>("inch");
   const [openSection, setOpenSection] = useState("shirt");
   const [measurements, setMeasurements] =
     useState<Measurements>(emptyMeasurements);
   const [others, setOthers] = useState("");
 
-  const updateMeasurement = (
+  useEffect(() => {
+    const loadMeasurement = async () => {
+      try {
+        const records = await getCustomerMeasurements(customerId);
+
+        const record = records.find((item) => item.id === measurementId);
+
+        if (!record) {
+          console.log("Measurement not found");
+          return;
+        }
+
+        const savedMeasurements = JSON.parse(record.measurements);
+
+        setMeasurements(savedMeasurements);
+        setUnit(record.unit);
+        setOthers(record.notes ?? "");
+      } catch (error) {
+        console.log("Failed to load measurement:", error);
+      }
+    };
+
+    if (mode === "edit" && measurementId) {
+      loadMeasurement();
+    }
+  }, [mode, customerId, measurementId]);
+
+  const handleFieldChange = (
     sectionKey: string,
     fieldKey: string,
     value: string,
@@ -58,8 +107,11 @@ const MeasurementsScreen = () => {
 
   const convertValue = (value: string) => {
     if (!value) return "";
+
     const number = parseFloat(value);
+
     if (Number.isNaN(number)) return value;
+
     if (unit === "cm") {
       return (number * 2.54).toFixed(1);
     }
@@ -67,30 +119,55 @@ const MeasurementsScreen = () => {
     return value;
   };
 
-  const handleUpdate = () => {
-    console.log("Measurements:", measurements);
+  const handleSave = async () => {
+    try {
+      if (!customerId) {
+        console.log("Customer ID is missing");
+        return;
+      }
 
-    router.back();
+      if (mode === "edit" && measurementId) {
+        await updateMeasurement(measurementId, measurements, unit, others);
+
+        console.log("Measurement updated successfully");
+      } else {
+        await addMeasurement(customerId, measurements, unit, others);
+
+        console.log("Measurement saved successfully");
+      }
+
+      router.back();
+    } catch (error) {
+      console.log("Failed to save measurement:", error);
+    }
   };
 
   return (
     <>
       <Stack.Screen
         options={{
-          title: mode === "edit" ? " Measurements" : "New Measurements",
+          title: mode === "edit" ? t("measurementsTitle") : t("newMeasurement"),
 
           headerStyle: {
-            backgroundColor: theme.color.secondaryLight,
+            backgroundColor: colors.secondaryLight,
           },
-          headerTintColor: theme.color.textWhite,
+
+          headerTintColor: colors.textWhite,
+
           headerTitleStyle: {
             fontSize: 20,
             fontWeight: "600",
           },
         }}
       />
+
       <KeyboardAvoidingView
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
@@ -99,43 +176,78 @@ const MeasurementsScreen = () => {
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Measurement Unit */}
           <View style={styles.unitContainer}>
-            <Text style={styles.unitTitle}>Measurement Unit</Text>
+            <Text
+              style={[
+                styles.unitTitle,
+                {
+                  color: colors.text,
+                },
+              ]}
+            >
+              {t("unit")}
+            </Text>
 
-            <View style={styles.unitToggle}>
+            <View
+              style={[
+                styles.unitToggle,
+                {
+                  backgroundColor: colors.primary,
+                },
+              ]}
+            >
               <Pressable
                 style={[
                   styles.unitButton,
-                  unit === "inch" && styles.activeUnit,
+                  unit === "inch" && [
+                    styles.activeUnit,
+                    {
+                      backgroundColor: colors.secondaryLight,
+                    },
+                  ],
                 ]}
                 onPress={() => setUnit("inch")}
               >
                 <Text
                   style={[
                     styles.unitText,
-                    unit === "inch" && styles.activeUnitText,
+                    {
+                      color: colors.textWhite,
+                    },
                   ]}
                 >
-                  Inches
+                  {t("inch")}
                 </Text>
               </Pressable>
 
               <Pressable
-                style={[styles.unitButton, unit === "cm" && styles.activeUnit]}
+                style={[
+                  styles.unitButton,
+                  unit === "cm" && [
+                    styles.activeUnit,
+                    {
+                      backgroundColor: colors.secondaryLight,
+                    },
+                  ],
+                ]}
                 onPress={() => setUnit("cm")}
               >
                 <Text
                   style={[
                     styles.unitText,
-                    unit === "cm" && styles.activeUnitText,
+                    {
+                      color: colors.textWhite,
+                    },
                   ]}
                 >
-                  CM
+                  {t("cm")}
                 </Text>
               </Pressable>
             </View>
           </View>
 
+          {/* Measurement Sections */}
           {measurementSections
             .filter((section) => section.key !== "others")
             .map((section) => {
@@ -144,19 +256,37 @@ const MeasurementsScreen = () => {
               return (
                 <View
                   key={section.key}
-                  style={[styles.section, isOpen && styles.openSection]}
+                  style={[
+                    styles.section,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                    },
+                    isOpen && {
+                      backgroundColor: colors.card,
+                    },
+                  ]}
                 >
                   {/* Section Header */}
                   <Pressable
                     style={styles.sectionHeader}
                     onPress={() => toggleSection(section.key)}
                   >
-                    <Text style={styles.sectionTitle}>{section.title}</Text>
+                    <Text
+                      style={[
+                        styles.sectionTitle,
+                        {
+                          color: colors.text,
+                        },
+                      ]}
+                    >
+                      {section.title}
+                    </Text>
 
                     <Ionicons
                       name={isOpen ? "chevron-up" : "chevron-forward"}
                       size={20}
-                      color={theme.color.text}
+                      color={colors.text}
                     />
                   </Pressable>
 
@@ -173,11 +303,19 @@ const MeasurementsScreen = () => {
                               value={convertValue(value)}
                               keyboardType="decimal-pad"
                               onChangeText={(text) =>
-                                updateMeasurement(section.key, field.key, text)
+                                handleFieldChange(section.key, field.key, text)
                               }
-                              placeholder={`Enter ${field.label.toLowerCase()}`}
+                              placeholder={`${t("enter")} ${field.label.toLowerCase()}`}
                             />
-                            <Text style={styles.unitLabel}>
+
+                            <Text
+                              style={[
+                                styles.unitLabel,
+                                {
+                                  color: colors.textSecondary,
+                                },
+                              ]}
+                            >
                               {unit === "inch" ? "in" : "cm"}
                             </Text>
                           </View>
@@ -188,23 +326,30 @@ const MeasurementsScreen = () => {
                 </View>
               );
             })}
+
+          {/* Other Notes */}
           <View>
             <InputField
-              containerStyle={styles.othersInput}
-              label="Others"
-              placeholder="Extra notes"
+              containerStyle={[
+                styles.othersInput,
+                {
+                  backgroundColor: colors.card,
+                },
+              ]}
+              label={t("others")}
+              placeholder={t("extraNotes")}
               multiline={true}
               value={others}
               textAlignVertical="top"
               onChangeText={setOthers}
             />
           </View>
+
+          {/* Save / Update */}
           <MainButton
-            title={
-              mode === "edit" ? "Update Measurements" : "Save Measurements"
-            }
+            title={mode === "edit" ? t("updateMeasurement") : t("save")}
             loading={false}
-            onPress={handleUpdate}
+            onPress={handleSave}
           />
         </ScrollView>
       </KeyboardAvoidingView>
@@ -217,7 +362,6 @@ export default MeasurementsScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.color.background,
   },
 
   content: {
@@ -232,13 +376,11 @@ const styles = StyleSheet.create({
   unitTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: theme.color.textNavy,
     marginBottom: 8,
   },
 
   unitToggle: {
     flexDirection: "row",
-    backgroundColor: theme.color.primary,
     borderRadius: theme.radius.large,
     padding: 3,
   },
@@ -251,31 +393,18 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.medium,
   },
 
-  activeUnit: {
-    backgroundColor: theme.color.secondaryLight,
-  },
+  activeUnit: {},
 
   unitText: {
     fontSize: theme.font.size.medium,
     fontWeight: "600",
-    color: theme.color.textWhite,
-  },
-
-  activeUnitText: {
-    color: theme.color.textWhite,
   },
 
   section: {
-    backgroundColor: theme.color.textWhite,
     borderRadius: 10,
     marginBottom: 10,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: theme.color.border,
-  },
-
-  openSection: {
-    backgroundColor: theme.color.textWhite,
   },
 
   sectionHeader: {
@@ -289,7 +418,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     fontWeight: "600",
-    color: theme.color.textNavy,
   },
 
   fieldsContainer: {
@@ -301,16 +429,16 @@ const styles = StyleSheet.create({
     position: "relative",
     marginBottom: 8,
   },
+
   othersInput: {
     minHeight: 120,
-    backgroundColor: theme.color.textWhite,
   },
+
   unitLabel: {
     position: "absolute",
     right: 14,
     top: 20,
     fontSize: 12,
-    color: "#777",
   },
 
   notesInfo: {
@@ -320,13 +448,11 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     padding: 12,
     borderRadius: 10,
-    backgroundColor: "#FFFDF5",
   },
 
   notesText: {
     flex: 1,
     fontSize: 12,
-    color: "#666",
     lineHeight: 18,
   },
 });

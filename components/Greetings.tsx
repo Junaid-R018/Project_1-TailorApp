@@ -1,9 +1,12 @@
+import { useLanguage } from "@/app/context/LanguageContext";
+import { useTheme } from "@/app/context/ThemeContext";
+import { Order } from "@/sqliteDB/order";
+import { getServices, Service } from "@/sqliteDB/services";
 import { theme } from "@/styles/theme";
-import { servicesData } from "@/Utils/dummyData";
 import { Spacer15 } from "@/Utils/spacing";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   ImageBackground,
@@ -12,19 +15,45 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View,
   useWindowDimensions,
+  View,
 } from "react-native";
 import ServiceCard from "./ServiceCard";
 
-const Greetings = () => {
+type GreetingsProps = {
+  orders: Order[];
+};
+
+const Greetings = ({ orders }: GreetingsProps) => {
   const { width } = useWindowDimensions();
+
+  const { colors } = useTheme();
+  const { t } = useLanguage();
+
+  const [services, setServices] = useState<Service[]>([]);
+
+  const loadServices = async () => {
+    try {
+      const data = await getServices();
+      setServices(data);
+    } catch (error) {
+      console.log("Failed to load services", error);
+    }
+  };
+
+  useEffect(() => {
+    loadServices();
+  }, []);
 
   const now = new Date();
   const hour = now.getHours();
 
   const greeting =
-    hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
+    hour < 12
+      ? t("goodMorning")
+      : hour < 17
+        ? t("goodAfternoon")
+        : t("goodEvening");
 
   const day = now.toLocaleDateString("en-US", {
     weekday: "short",
@@ -37,36 +66,83 @@ const Greetings = () => {
   });
 
   return (
-    <View style={styles.main}>
-      <View style={styles.header}>
+    <View
+      style={[
+        styles.main,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
+    >
+      {/* Header */}
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: colors.secondaryDark,
+          },
+        ]}
+      >
         <View style={styles.headerTop}>
           <View style={styles.greetingContainer}>
-            <Text style={styles.greetingText}>{greeting}</Text>
-            <Text style={styles.greetingText2}>
+            <Text
+              style={[
+                styles.greetingText,
+                {
+                  color: colors.textGold,
+                },
+              ]}
+            >
+              {greeting}
+            </Text>
+
+            <Text
+              style={[
+                styles.greetingText2,
+                {
+                  color: colors.textGold,
+                },
+              ]}
+            >
               {day}, {date}
             </Text>
           </View>
+
           <Pressable
             style={styles.notification}
             onPress={() => router.push("/Notifications")}
           >
-            <Ionicons
-              name="notifications"
-              size={24}
-              color={theme.color.textGold}
-            />
+            <Ionicons name="notifications" size={24} color={colors.textGold} />
           </Pressable>
         </View>
+
         <Spacer15 />
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color={theme.color.textSecondary} />
+
+        {/* Search */}
+        <View
+          style={[
+            styles.searchContainer,
+            {
+              backgroundColor: colors.backgroundLight,
+            },
+          ]}
+        >
+          <Ionicons name="search" size={20} color={colors.textSecondary} />
+
           <TextInput
-            style={styles.input}
-            placeholder="Search here..."
-            placeholderTextColor={theme.color.textSecondary}
+            style={[
+              styles.input,
+              {
+                color: colors.text,
+              },
+            ]}
+            placeholder={t("searchHere")}
+            placeholderTextColor={colors.textSecondary}
           />
         </View>
       </View>
+
+      {/* User Card */}
       <ImageBackground
         source={require("../assets/images/dp.png")}
         style={[
@@ -78,68 +154,192 @@ const Greetings = () => {
         imageStyle={styles.userCardImage}
       >
         <View style={styles.imageOverlay} />
+
         <View style={styles.userDetails}>
-          <Text style={styles.userName}>Rana Junaid</Text>
-          <Text style={styles.userPhone}>0300 1234567</Text>
+          <Text
+            style={[
+              styles.userName,
+              {
+                color: colors.primary,
+              },
+            ]}
+          >
+            Rana Junaid
+          </Text>
+
+          <Text
+            style={[
+              styles.userPhone,
+              {
+                color: colors.primary,
+              },
+            ]}
+          >
+            0300 1234567
+          </Text>
         </View>
+
         <Pressable
-          onPress={() => {}}
+          onPress={() => {
+            router.push("/customer/add");
+          }}
           style={({ pressed }) => [
             styles.orderButton,
-            pressed && styles.orderButtonPressed,
+            {
+              borderColor: colors.textGold,
+            },
+            pressed && {
+              backgroundColor: colors.textGold,
+            },
           ]}
         >
           {({ pressed }) => (
             <Text
               style={[
                 styles.orderButtonText,
-                pressed && styles.orderButtonTextPressed,
+                {
+                  color: colors.textGold,
+                },
+                pressed && {
+                  color: colors.secondaryDark,
+                },
               ]}
             >
-              Order Now
+              {t("orderNow")}
             </Text>
           )}
         </Pressable>
       </ImageBackground>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        {/* Services Header */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.text}>Our Services</Text>
-          <Pressable onPress={() => console.log("View all services")}>
-            <Text style={styles.subText}>View all</Text>
+          <Text
+            style={[
+              styles.text,
+              {
+                color: colors.text,
+              },
+            ]}
+          >
+            {t("ourServices")}
+          </Text>
+
+          <Pressable onPress={() => {}}>
+            <Text
+              style={[
+                styles.subText,
+                {
+                  color: colors.textGold,
+                },
+              ]}
+            >
+              {t("viewAll")}
+            </Text>
           </Pressable>
         </View>
+
+        {/* Services */}
         <FlatList
-          data={servicesData}
+          data={services}
           horizontal
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.servicesList}
           renderItem={({ item }) => <ServiceCard service={item} />}
         />
+
+        {/* Orders Header */}
         <View style={styles.orders}>
-          <Text style={styles.text}>My Orders</Text>
-          <Pressable onPress={() => console.log("View all orders")}>
-            <Text style={styles.subText}>View all</Text>
+          <Text
+            style={[
+              styles.text,
+              {
+                color: colors.text,
+              },
+            ]}
+          >
+            {t("myOrders")}
+          </Text>
+
+          <Pressable onPress={() => {}}>
+            <Text
+              style={[
+                styles.subText,
+                {
+                  color: colors.textGold,
+                },
+              ]}
+            >
+              {t("viewAll")}
+            </Text>
           </Pressable>
         </View>
-        <View style={styles.orderPlaceholder}>
-          <Text style={styles.noOrdersText}>No orders yet</Text>
-        </View>
-        <View style={styles.orderPlaceholder}>
-          <Text style={styles.noOrdersText}>No orders yet</Text>
-        </View>
-        <View style={styles.orderPlaceholder}>
-          <Text style={styles.noOrdersText}>No orders yet</Text>
-        </View>
-        <View style={styles.orderPlaceholder}>
-          <Text style={styles.noOrdersText}>No orders yet</Text>
-        </View>
-        <View style={styles.orderPlaceholder}>
-          <Text style={styles.noOrdersText}>No orders yet</Text>
-        </View>
+
+        {/* Orders */}
+        {orders.length === 0 ? (
+          <View
+            style={[
+              styles.orderPlaceholder,
+              {
+                backgroundColor: colors.card,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.noOrdersText,
+                {
+                  color: colors.textSecondary,
+                },
+              ]}
+            >
+              {t("noOrdersYet")}
+            </Text>
+          </View>
+        ) : (
+          orders.map((order) => (
+            <View
+              key={order.id}
+              style={[
+                styles.orderPlaceholder,
+                {
+                  backgroundColor: colors.card,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.noOrdersText,
+                  {
+                    color: colors.text,
+                  },
+                ]}
+              >
+                {order.order_code}
+              </Text>
+
+              <Text
+                style={{
+                  color: colors.text,
+                }}
+              >
+                Rs. {order.amount}
+              </Text>
+
+              <Text
+                style={{
+                  color: colors.textSecondary,
+                }}
+              >
+                {order.status}
+              </Text>
+            </View>
+          ))
+        )}
       </ScrollView>
     </View>
   );
@@ -150,12 +350,10 @@ export default Greetings;
 const styles = StyleSheet.create({
   main: {
     flex: 1,
-    backgroundColor: theme.color.background,
   },
 
   header: {
     height: 300,
-    backgroundColor: theme.color.secondaryDark,
     paddingHorizontal: 16,
     paddingTop: 45,
   },
@@ -173,14 +371,12 @@ const styles = StyleSheet.create({
   greetingText: {
     fontSize: theme.font.size.extralarge,
     fontWeight: "800",
-    color: theme.color.textGold,
   },
 
   greetingText2: {
     marginTop: 3,
     fontSize: theme.font.size.small,
     fontWeight: "400",
-    color: theme.color.textGold,
   },
 
   notification: {
@@ -190,11 +386,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   searchContainer: {
     height: 52,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: theme.color.backgroundLight,
     paddingHorizontal: 15,
     borderRadius: theme.radius.round,
   },
@@ -203,8 +399,8 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
     fontSize: theme.font.size.medium,
-    color: theme.color.text,
   },
+
   userCard: {
     position: "absolute",
     top: 190,
@@ -241,13 +437,11 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: theme.font.size.display,
     fontWeight: "700",
-    color: theme.color.primary,
   },
 
   userPhone: {
     marginTop: 4,
     fontSize: theme.font.size.medium,
-    color: theme.color.primary,
   },
 
   orderButton: {
@@ -257,23 +451,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderWidth: 2,
-    borderColor: theme.color.textGold,
     borderRadius: 25,
     backgroundColor: "transparent",
   },
 
-  orderButtonPressed: {
-    backgroundColor: theme.color.textGold,
-  },
-
   orderButtonText: {
-    color: theme.color.textGold,
     fontSize: 14,
     fontWeight: "700",
-  },
-
-  orderButtonTextPressed: {
-    color: theme.color.secondary,
   },
 
   scrollContent: {
@@ -290,20 +474,20 @@ const styles = StyleSheet.create({
   },
 
   text: {
-    color: theme.color.text,
     fontSize: theme.font.size.medium,
     fontWeight: "600",
   },
 
   subText: {
-    color: theme.color.textGold,
     fontSize: theme.font.size.medium,
     fontWeight: "600",
   },
+
   servicesList: {
     paddingHorizontal: 16,
     paddingBottom: 10,
   },
+
   orders: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -311,6 +495,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginTop: 20,
   },
+
   orderPlaceholder: {
     marginHorizontal: 16,
     marginTop: 12,
@@ -318,11 +503,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: theme.color.backgroundLight,
     elevation: 2,
   },
+
   noOrdersText: {
-    color: theme.color.textSecondary,
     fontSize: theme.font.size.small,
   },
 });

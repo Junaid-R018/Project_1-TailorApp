@@ -29,7 +29,7 @@ export default function OrderCard({ order }: OrderCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: theme.color.textWhite,
+    backgroundColor: theme.colors.light.textWhite,
     padding: 14,
     borderRadius: theme.radius.medium,
     marginBottom: 10,
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   orderNumber: {
     fontSize: theme.font.size.medium,
     fontWeight: "500",
-    color: theme.color.text,
+    color: theme.colors.light.text,
   },
 
   status: {
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
 
   date: {
     marginTop: 6,
-    color: theme.color.textSecondary,
+    color: theme.colors.light.textSecondary,
   },
 
   bottomRow: {
@@ -71,12 +71,12 @@ const styles = StyleSheet.create({
   },
 
   item: {
-    color: theme.color.textSecondary,
+    color: theme.colors.light.textSecondary,
   },
 
   total: {
     fontSize: theme.font.size.small,
     fontWeight: "700",
-    color: theme.color.text,
+    color: theme.colors.light.text,
   },
 });

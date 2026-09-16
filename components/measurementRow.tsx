@@ -21,17 +21,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 16,
     borderBottomWidth: 1.5,
-    borderBottomColor: theme.color.border,
+    borderBottomColor: theme.colors.light.border,
   },
 
   label: {
     fontSize: theme.font.size.medium,
-    color: theme.color.textSecondary,
+    color: theme.colors.light.textSecondary,
   },
 
   value: {
     fontSize: theme.font.size.medium,
     fontWeight: "600",
-    color: theme.color.text,
+    color: theme.colors.light.text,
   },
 });

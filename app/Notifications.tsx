@@ -14,12 +14,12 @@ const Notifications = () => {
           title: "Notifications",
           headerShown: true,
           headerStyle: {
-            backgroundColor: theme.color.secondaryLight,
+            backgroundColor: theme.colors.light.secondaryLight,
           },
 
-          headerTintColor: theme.color.textWhite,
+          headerTintColor: theme.colors.light.textWhite,
           headerTitleStyle: {
-            color: theme.color.textWhite,
+            color: theme.colors.light.textWhite,
             fontSize: 20,
             fontWeight: "700",
           },
@@ -47,7 +47,7 @@ export default Notifications;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.color.background,
+    backgroundColor: theme.colors.light.background,
   },
 
   list: {

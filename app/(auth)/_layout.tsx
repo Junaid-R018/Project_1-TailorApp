@@ -8,16 +8,16 @@ export default function AuthLayout() {
         headerShown: true,
 
         headerStyle: {
-          backgroundColor: theme.color.secondary,
+          backgroundColor: theme.colors.light.secondary,
         },
 
         // Back arrow + header text
-        headerTintColor: theme.color.textWhite,
+        headerTintColor: theme.colors.light.textWhite,
 
         headerTitleStyle: {
           fontSize: 20,
           fontWeight: "600",
-          color: theme.color.textWhite,
+          color: theme.colors.light.textWhite,
         },
 
         headerBackTitle: "Back",

@@ -1,7 +1,7 @@
 import InputField from "@/components/inputField";
 import MainButton from "@/components/MainButton ";
+import { updatePassword } from "@/sqliteDB/auth";
 import { theme } from "@/styles/theme";
-import { updatePassword } from "@/Utils/authStorage";
 import { useLoading } from "@/Utils/loading";
 import { Spacer20 } from "@/Utils/spacing";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -18,13 +18,22 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
+import { useLanguage } from "../context/LanguageContext";
+import { useTheme } from "../context/ThemeContext";
+
 const ForgetPasswordScreen = () => {
+  const { colors } = useTheme();
+  const { t } = useLanguage();
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
+
   const { loading, setLoading } = useLoading();
 
   const handleChangePassword = async () => {
@@ -32,56 +41,64 @@ const ForgetPasswordScreen = () => {
     setConfirmPasswordError("");
 
     if (!password) {
-      setPasswordError("Password is required");
+      setPasswordError(t("passwordRequired"));
+
       Toast.show({
         type: "error",
-        text1: "Password is required",
+        text1: t("passwordRequired"),
       });
+
       return;
     }
 
     if (password.length < 8) {
-      setPasswordError("Password must be at least 8 characters");
+      setPasswordError(t("passwordMinLength"));
       return;
     }
 
     if (!confirmPassword) {
-      setConfirmPasswordError("Please confirm your password");
+      setConfirmPasswordError(t("confirmPasswordRequired"));
+
       Toast.show({
         type: "error",
-        text1: "Confirm password is required",
+        text1: t("confirmPasswordRequiredToast"),
       });
+
       return;
     }
 
     if (password !== confirmPassword) {
-      setConfirmPasswordError("Passwords do not match");
+      setConfirmPasswordError(t("passwordsDoNotMatch"));
+
       Toast.show({
         type: "error",
-        text1: "Something went wrong.",
-        text2: "Invalid phone number or password",
+        text1: t("somethingWentWrong"),
+        text2: t("passwordsDoNotMatch"),
       });
+
       return;
     }
 
     try {
       setLoading(true);
 
-      const updated = await updatePassword(password);
+      // Database logic remains unchanged
+      const updated = await updatePassword(password, confirmPassword);
 
       if (!updated) {
         Toast.show({
           type: "error",
-          text1: "Password reset failed",
-          text2: "User not found. Please try again.",
+          text1: t("passwordResetFailed"),
+          text2: t("userNotFound"),
         });
+
         return;
       }
 
       Toast.show({
         type: "success",
-        text1: "Password changed successfully",
-        text2: "Please login with your new password.",
+        text1: t("passwordChangedSuccessfully"),
+        text2: t("loginWithNewPassword"),
       });
 
       router.replace("/(auth)/login");
@@ -90,8 +107,8 @@ const ForgetPasswordScreen = () => {
 
       Toast.show({
         type: "error",
-        text1: "Something went wrong",
-        text2: "Unable to change your password. Please try again.",
+        text1: t("somethingWentWrong"),
+        text2: t("unableChangePassword"),
       });
     } finally {
       setLoading(false);
@@ -100,11 +117,36 @@ const ForgetPasswordScreen = () => {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       keyboardVerticalOffset={Platform.OS === "ios" ? 30 : 0}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <Stack.Screen options={{ title: "Forget Password" }} />
+      <Stack.Screen
+        options={{
+          title: t("resetPassword"),
+          headerShown: true,
+
+          headerStyle: {
+            backgroundColor: colors.secondaryLight,
+          },
+
+          headerTintColor: colors.textWhite,
+
+          headerTitleStyle: {
+            color: colors.textWhite,
+            fontSize: 20,
+            fontWeight: "700",
+          },
+
+          headerTitleAlign: "center",
+          headerShadowVisible: true,
+        }}
+      />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -113,87 +155,119 @@ const ForgetPasswordScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.form}>
-          <Text style={styles.title}>Reset Password</Text>
+          <Text
+            style={[
+              styles.title,
+              {
+                color: colors.textGold,
+              },
+            ]}
+          >
+            {t("resetPassword")}
+          </Text>
+
+          {/* New Password */}
           <View style={styles.inputContainer}>
             <InputField
-              label="New Password"
+              label={t("newPassword")}
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
 
                 if (text.length > 0 && text.length < 8) {
-                  setPasswordError("Password must be at least 8 characters");
+                  setPasswordError(t("passwordMinLength"));
                 } else {
                   setPasswordError("");
                 }
 
                 if (confirmPassword && text !== confirmPassword) {
-                  setConfirmPasswordError("Passwords do not match");
+                  setConfirmPasswordError(t("passwordsDoNotMatch"));
                 } else {
                   setConfirmPasswordError("");
                 }
               }}
-              placeholder="Enter your password"
+              placeholder={t("enterYourPassword")}
               secureTextEntry={!showPassword}
             />
 
             <Pressable
               style={styles.eyeButton}
-              onPress={() => setShowPassword(!showPassword)}
+              onPress={() => setShowPassword((prev) => !prev)}
             >
               <Ionicons
                 name={showPassword ? "eye-off-outline" : "eye-outline"}
                 size={18}
-                color={theme.color.textLight}
+                color={colors.textLight}
               />
             </Pressable>
 
             {passwordError ? (
-              <Text style={styles.errorText}>{passwordError}</Text>
+              <Text
+                style={[
+                  styles.errorText,
+                  {
+                    color: colors.error,
+                  },
+                ]}
+              >
+                {passwordError}
+              </Text>
             ) : null}
           </View>
+
+          {/* Confirm Password */}
           <View>
             <InputField
-              label="Confirm Password"
+              label={t("confirmPassword")}
               value={confirmPassword}
               onChangeText={(text) => {
                 setConfirmPassword(text);
 
                 if (!text) {
-                  setConfirmPasswordError("Please confirm your password");
+                  setConfirmPasswordError(t("confirmPasswordRequired"));
                 } else if (text !== password) {
-                  setConfirmPasswordError("Passwords do not match");
+                  setConfirmPasswordError(t("passwordsDoNotMatch"));
                 } else {
                   setConfirmPasswordError("");
                 }
               }}
-              placeholder="Re-enter password"
+              placeholder={t("reenterPassword")}
               secureTextEntry={!showConfirmPassword}
             />
 
             <Pressable
               style={styles.eyeButton}
-              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              onPress={() => setShowConfirmPassword((prev) => !prev)}
             >
               <Ionicons
                 name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
                 size={18}
-                color={theme.color.textLight}
+                color={colors.textLight}
               />
             </Pressable>
 
             {confirmPasswordError ? (
-              <Text style={styles.errorText}>{confirmPasswordError}</Text>
+              <Text
+                style={[
+                  styles.errorText,
+                  {
+                    color: colors.error,
+                  },
+                ]}
+              >
+                {confirmPasswordError}
+              </Text>
             ) : null}
           </View>
 
           <View style={styles.button}>
             <MainButton
-              title="Save password"
+              title={t("savePassword")}
               onPress={handleChangePassword}
               loading={loading}
             />
           </View>
+
           <Spacer20 />
         </View>
       </ScrollView>
@@ -206,7 +280,6 @@ export default ForgetPasswordScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.color.background,
   },
 
   form: {
@@ -221,7 +294,6 @@ const styles = StyleSheet.create({
     fontSize: theme.font.size.display,
     fontWeight: theme.font.weight.extraBold,
     textAlign: "center",
-    color: theme.color.textGold,
   },
 
   eyeButton: {
@@ -229,19 +301,21 @@ const styles = StyleSheet.create({
     right: 12,
     top: 18,
   },
+
   inputContainer: {
     marginBottom: 15,
   },
 
   errorText: {
     marginBottom: 8,
-    color: theme.color.error,
     fontSize: 12,
     marginLeft: 5,
   },
+
   scrollContent: {
     flexGrow: 1,
   },
+
   button: {
     marginTop: theme.spacing.medium,
   },

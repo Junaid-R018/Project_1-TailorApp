@@ -1,3 +1,4 @@
+import { useTheme } from "@/app/context/ThemeContext";
 import { theme } from "@/styles/theme";
 import React from "react";
 import {
@@ -9,7 +10,7 @@ import {
   ViewStyle,
 } from "react-native";
 
-type ThemeColor = keyof typeof theme.color;
+type ThemeColor = keyof typeof theme.colors.light;
 
 interface IMainButton {
   title: string;
@@ -30,6 +31,8 @@ const MainButton = ({
   parentStyle,
   btnStyle,
 }: IMainButton) => {
+  const { colors } = useTheme();
+
   return (
     <Pressable
       onPress={!loading && !disabled ? onPress : undefined}
@@ -54,16 +57,25 @@ const MainButton = ({
           styles.btnContainer,
           {
             backgroundColor: disabled
-              ? "#DFDFDF"
-              : theme.color[backgroundColor],
+              ? colors.disabledBackground
+              : colors[backgroundColor],
           },
           btnStyle,
         ]}
       >
         {loading ? (
-          <ActivityIndicator color={theme.color.textWhite} />
+          <ActivityIndicator color={colors.textWhite} />
         ) : (
-          <Text style={styles.label}>{title}</Text>
+          <Text
+            style={[
+              styles.label,
+              {
+                color: colors.textWhite,
+              },
+            ]}
+          >
+            {title}
+          </Text>
         )}
       </View>
     </Pressable>
@@ -71,23 +83,24 @@ const MainButton = ({
 };
 
 export default MainButton;
+
 const styles = StyleSheet.create({
   parent: {
     width: "90%",
     alignSelf: "center",
     marginTop: "30%",
   },
+
   btnContainer: {
     borderRadius: theme.radius.medium,
     paddingVertical: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: theme.color.primary,
   },
+
   label: {
     textAlign: "center",
     fontSize: theme.font.size.large,
     fontWeight: theme.font.weight.medium,
-    color: theme.color.textWhite,
   },
 });

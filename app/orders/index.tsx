@@ -1,9 +1,7 @@
-// app/orders/index.tsx
-
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Image,
@@ -14,8 +12,9 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Order, orders, OrderStatus } from "@/Utils/dummyOrders";
+import { getAllOrders, OrderStatus, OrderWithCustomer } from "@/sqliteDB/order";
 
 const statusFilters: ("All" | OrderStatus)[] = [
   "All",
@@ -31,47 +30,72 @@ export default function OrdersScreen() {
     "All",
   );
 
+  const [orders, setOrders] = useState<OrderWithCustomer[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [searchVisible, setSearchVisible] = useState(false);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const loadOrders = async () => {
+    try {
+      setLoading(true);
+
+      const data = await getAllOrders();
+
+      setOrders(data);
+    } catch (error) {
+      console.error("Failed to load orders:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredOrders = useMemo(() => {
     let result = orders;
 
-    // Status filter
     if (selectedStatus !== "All") {
       result = result.filter((order) => order.status === selectedStatus);
     }
 
-    // Search filter
     if (search.trim()) {
       const query = search.toLowerCase().trim();
 
       result = result.filter(
         (order) =>
           order.customerName.toLowerCase().includes(query) ||
-          order.customerId.toLowerCase().includes(query),
+          order.order_code.toLowerCase().includes(query) ||
+          String(order.customer_id).includes(query),
       );
     }
 
     return result;
-  }, [selectedStatus, search]);
+  }, [orders, selectedStatus, search]);
 
   return (
-    <>
+    <SafeAreaView style={styles.main}>
       <Stack.Screen
         options={{
           title: "All Orders",
           headerShown: true,
+
           headerStyle: {
-            backgroundColor: theme.color.secondaryLight,
+            backgroundColor: theme.colors.light.secondaryLight,
           },
+
           headerTitleAlign: "center",
-          headerTintColor: theme.color.textWhite,
+
+          headerTintColor: theme.colors.light.textWhite,
+
           headerTitleStyle: {
-            color: theme.color.textWhite,
+            color: theme.colors.light.textWhite,
             fontSize: 20,
             fontWeight: "700",
           },
+
           headerRight: () => (
             <View style={styles.headerActions}>
               <Pressable
@@ -83,12 +107,15 @@ export default function OrdersScreen() {
                 <Ionicons
                   name="search-outline"
                   size={24}
-                  color={theme.color.textWhite}
+                  color={theme.colors.light.textWhite}
                 />
               </Pressable>
-
               <Pressable onPress={() => router.push("/customer/add")}>
-                <Ionicons name="add" size={28} color={theme.color.textWhite} />
+                <Ionicons
+                  name="add"
+                  size={28}
+                  color={theme.colors.light.textWhite}
+                />
               </Pressable>
             </View>
           ),
@@ -96,14 +123,14 @@ export default function OrdersScreen() {
       />
 
       <View style={styles.container}>
-        {/* SEARCH */}
         {searchVisible && (
           <View style={styles.searchContainer}>
             <Ionicons name="search-outline" size={21} color="#777" />
+
             <TextInput
               value={search}
               onChangeText={setSearch}
-              placeholder="Search customer name or ID"
+              placeholder="Search customer name or order ID"
               placeholderTextColor="#999"
               style={styles.searchInput}
               autoFocus
@@ -116,7 +143,7 @@ export default function OrdersScreen() {
             )}
           </View>
         )}
-        {/* STATUS FILTERS */}
+
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -141,62 +168,72 @@ export default function OrdersScreen() {
           })}
         </ScrollView>
 
-        {/* RESULT */}
         <Text style={styles.resultText}>
           {search
-            ? `${filteredOrders.length} customer found`
-            : `${filteredOrders.length} orders`}
+            ? `${filteredOrders.length} ${
+                filteredOrders.length === 1 ? "customer" : "customers"
+              } found`
+            : `${filteredOrders.length} ${
+                filteredOrders.length === 1 ? "order" : "orders"
+              }`}
         </Text>
 
-        {/* ORDERS */}
         <FlatList
           data={filteredOrders}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id)}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
           style={styles.ordersList}
+          contentContainerStyle={[
+            styles.listContent,
+            filteredOrders.length === 0 && styles.emptyListContent,
+          ]}
           renderItem={({ item }) => <OrderCard order={item} />}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="file-tray-outline" size={55} color="#aaa" />
 
-              <Text style={styles.emptyTitle}>No orders found</Text>
-
-              <Text style={styles.emptyText}>
-                Try another customer name or ID.
+              <Text style={styles.emptyTitle}>
+                {loading ? "Loading orders..." : "No orders found"}
               </Text>
+
+              {!loading && (
+                <Text style={styles.emptyText}>
+                  Try another customer name or ID.
+                </Text>
+              )}
             </View>
           }
         />
       </View>
-    </>
+    </SafeAreaView>
   );
 }
 
-function OrderCard({ order }: { order: Order }) {
+function OrderCard({ order }: { order: OrderWithCustomer }) {
   return (
     <Pressable
       style={styles.card}
       onPress={() => {
-        // Order details will be added later
         console.log("Selected order:", order.id);
       }}
     >
-      {/* CUSTOMER IMAGE */}
-      <Image source={{ uri: order.image }} style={styles.customerImage} />
+      <Image
+        source={require("@/assets/images/dp.png")}
+        style={styles.customerImage}
+      />
 
-      {/* CUSTOMER INFO */}
       <View style={styles.customerInfo}>
         <Text style={styles.customerName} numberOfLines={1}>
           {order.customerName}
         </Text>
 
-        <Text style={styles.customerId}>ID: {order.customerId}</Text>
+        <Text style={styles.customerId}>Order: {order.order_code}</Text>
 
-        <Text style={styles.orderDate}>{order.date}</Text>
+        <Text style={styles.orderDate}>
+          {new Date(order.created_at).toLocaleDateString("en-GB")}
+        </Text>
       </View>
 
-      {/* RIGHT SIDE */}
       <View style={styles.rightSection}>
         <StatusBadge status={order.status} />
 
@@ -211,20 +248,30 @@ function StatusBadge({ status }: { status: OrderStatus }) {
     <View
       style={[
         styles.statusBadge,
+
         status === "New" && styles.newStatus,
+
         status === "Pending" && styles.pendingStatus,
+
         status === "Ready" && styles.readyStatus,
+
         status === "Delivered" && styles.deliveredStatus,
+
         status === "Cancelled" && styles.cancelledStatus,
       ]}
     >
       <Text
         style={[
           styles.statusText,
+
           status === "New" && styles.newText,
+
           status === "Pending" && styles.pendingText,
+
           status === "Ready" && styles.readyText,
+
           status === "Delivered" && styles.deliveredText,
+
           status === "Cancelled" && styles.cancelledText,
         ]}
       >
@@ -235,92 +282,77 @@ function StatusBadge({ status }: { status: OrderStatus }) {
 }
 
 const styles = StyleSheet.create({
+  main: { flex: 1 },
   container: {
     flex: 1,
-    backgroundColor: theme.color.background,
+    backgroundColor: theme.colors.light.background,
   },
-
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
     gap: 18,
   },
-
   searchContainer: {
     height: 48,
     marginHorizontal: 16,
-    marginTop: 12,
     paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: theme.color.textWhite,
+    backgroundColor: theme.colors.light.textWhite,
     borderWidth: 1,
     elevation: 4,
-    borderColor: theme.color.border,
+    borderColor: theme.colors.light.border,
     borderRadius: theme.radius.round,
   },
-
   searchInput: {
     flex: 1,
     marginLeft: 8,
     fontSize: 14,
-    color: theme.color.text,
+    color: theme.colors.light.text,
   },
-
   filterContainer: {
     paddingHorizontal: 16,
     paddingVertical: 16,
     gap: 9,
   },
-
   filterButton: {
     paddingHorizontal: 18,
     height: 34,
-    borderRadius: 20,
+    borderRadius: theme.radius.xxl,
     backgroundColor: "#E2E2E2",
     alignItems: "center",
     justifyContent: "center",
   },
-
   activeFilter: {
-    backgroundColor: theme.color.primary,
+    backgroundColor: theme.colors.light.primary,
   },
-
   filterText: {
     fontSize: 13,
-    color: theme.color.text,
+    color: theme.colors.light.text,
     fontWeight: "500",
   },
-
   activeFilterText: {
-    color: theme.color.textWhite,
+    color: theme.colors.light.textWhite,
     fontWeight: "600",
   },
-
   resultText: {
     marginHorizontal: 16,
     marginBottom: 8,
-    fontSize: 13,
-    color: theme.color.textSecondary,
+    fontSize: theme.font.size.small,
+    color: theme.colors.light.textSecondary,
   },
-
-  ordersList: {
-    flex: 1,
-  },
-
+  ordersList: { flex: 1 },
   listContent: {
     paddingHorizontal: 16,
     paddingBottom: 30,
     gap: 10,
-    flexGrow: 0,
   },
-
+  /* * Only center the empty state. * Actual orders always start directly below * the result text. */ emptyListContent:
+    { flexGrow: 1, justifyContent: "center" },
   card: {
-    minHeight: 105,
-    backgroundColor: theme.color.textWhite,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: theme.color.border,
+    backgroundColor: theme.colors.light.textWhite,
+    borderRadius: theme.radius.large,
+    borderColor: theme.colors.light.border,
     padding: 12,
     flexDirection: "row",
     alignItems: "center",
@@ -332,107 +364,55 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.round,
     backgroundColor: "#E8E8E8",
   },
-
-  customerInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-
+  customerInfo: { flex: 1, marginLeft: 12 },
   customerName: {
     fontSize: 16,
     fontWeight: "700",
-    color: theme.color.textNavy,
+    color: theme.colors.light.textNavy,
     marginBottom: 3,
   },
-
   customerId: {
     fontSize: 12,
-    color: theme.color.textSecondary,
+    color: theme.colors.light.textSecondary,
     marginBottom: 4,
   },
-
   orderDate: {
     fontSize: 12,
-    color: theme.color.textSecondary,
+    color: theme.colors.light.textSecondary,
   },
-
   rightSection: {
     alignItems: "flex-end",
     justifyContent: "space-between",
-    minHeight: 65,
   },
-
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-  },
-
-  statusText: {
-    fontSize: 11,
-    fontWeight: "600",
-  },
-
-  newStatus: {
-    backgroundColor: theme.color.primary,
-  },
-
-  newText: {
-    color: theme.color.textWhite,
-  },
-
-  pendingStatus: {
-    backgroundColor: "#dd7119",
-  },
-
-  pendingText: {
-    color: theme.color.textWhite,
-  },
-
-  readyStatus: {
-    backgroundColor: theme.color.success,
-  },
-
-  readyText: {
-    color: theme.color.textWhite,
-  },
-
-  deliveredStatus: {
-    backgroundColor: "#DCEEFF",
-  },
-
-  deliveredText: {
-    color: "#2874B2",
-  },
-
-  cancelledStatus: {
-    backgroundColor: "#FFE0E0",
-  },
-
-  cancelledText: {
-    color: "#C0392B",
-  },
-
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 },
+  statusText: { fontSize: 11, fontWeight: "600" },
+  newStatus: { backgroundColor: theme.colors.light.primary },
+  newText: { color: theme.colors.light.textWhite },
+  pendingStatus: { backgroundColor: "#dd7119" },
+  pendingText: { color: theme.colors.light.textWhite },
+  readyStatus: { backgroundColor: theme.colors.light.success },
+  readyText: { color: theme.colors.light.textWhite },
+  deliveredStatus: { backgroundColor: theme.colors.light.secondaryLight },
+  deliveredText: { color: theme.colors.light.textWhite },
+  cancelledStatus: { backgroundColor: theme.colors.light.error },
+  cancelledText: { color: theme.colors.light.textWhite },
   amount: {
     marginTop: 10,
     fontSize: 13,
     fontWeight: "700",
-    color: theme.color.text,
+    color: theme.colors.light.text,
   },
-
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
     paddingTop: 80,
   },
-
   emptyTitle: {
     marginTop: 12,
     fontSize: 17,
     fontWeight: "600",
-    color: theme.color.textNavy,
+    color: theme.colors.light.textNavy,
   },
-
   emptyText: {
     marginTop: 5,
     fontSize: 13,

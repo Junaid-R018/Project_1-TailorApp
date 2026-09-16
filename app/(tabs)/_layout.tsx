@@ -9,7 +9,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.color.primary,
+        tabBarActiveTintColor: theme.colors.light.primary,
         tabBarInactiveTintColor: "#A7A7A7",
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.label,
@@ -25,7 +25,7 @@ export default function TabsLayout() {
               <Ionicons
                 name={focused ? "home" : "home-outline"}
                 size={size}
-                color={focused ? theme.color.secondary : "#A7A7A7"}
+                color={focused ? theme.colors.light.secondary : "#A7A7A7"}
               />
             </View>
           ),
@@ -41,7 +41,7 @@ export default function TabsLayout() {
               <Ionicons
                 name={focused ? "people" : "people-outline"}
                 size={size}
-                color={focused ? theme.color.secondary : "#A7A7A7"}
+                color={focused ? theme.colors.light.secondary : "#A7A7A7"}
               />
             </View>
           ),
@@ -57,7 +57,7 @@ export default function TabsLayout() {
               <Ionicons
                 name={focused ? "resize" : "resize-outline"}
                 size={size}
-                color={focused ? theme.color.secondary : "#A7A7A7"}
+                color={focused ? theme.colors.light.secondary : "#A7A7A7"}
               />
             </View>
           ),
@@ -73,7 +73,7 @@ export default function TabsLayout() {
               <Ionicons
                 name={focused ? "person" : "person-outline"}
                 size={size}
-                color={focused ? theme.color.secondary : "#A7A7A7"}
+                color={focused ? theme.colors.light.secondary : "#A7A7A7"}
               />
             </View>
           ),
@@ -85,7 +85,7 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: theme.color.secondaryLight,
+    backgroundColor: theme.colors.light.secondaryLight,
     borderTopWidth: 0,
     height: 80,
     paddingTop: 8,
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   },
 
   activeIcon: {
-    backgroundColor: theme.color.primary,
+    backgroundColor: theme.colors.light.primary,
     width: 38,
     height: 38,
     borderRadius: theme.radius.small,

@@ -1,4 +1,5 @@
 import { theme } from "@/styles/theme";
+import { getLoginStatus } from "@/Utils/authStorage";
 import { router } from "expo-router";
 import { useRef, useState } from "react";
 import {
@@ -37,7 +38,15 @@ export default function OnboardingScreen() {
     },
   ).current;
 
-  const handleNext = () => {
+  const handleSkip = async () => {
+    const isLoggedIn = await getLoginStatus();
+
+    if (isLoggedIn) {
+      router.replace("/(tabs)/home");
+    }
+  };
+
+  const handleNext = async () => {
     if (currentIndex < slides.length - 1) {
       flatListRef.current?.scrollToIndex({
         index: currentIndex + 1,
@@ -45,8 +54,12 @@ export default function OnboardingScreen() {
       });
       return;
     }
-
-    router.replace("/(tabs)/home");
+    const isLoggedIn = await getLoginStatus();
+    if (isLoggedIn) {
+      router.replace("/(tabs)/home");
+    } else {
+      router.replace("/(auth)/signup");
+    }
   };
 
   const renderItem = ({ item }: { item: (typeof slides)[number] }) => (
@@ -57,10 +70,7 @@ export default function OnboardingScreen() {
 
   return (
     <View style={styles.container}>
-      <Pressable
-        style={styles.skipButton}
-        onPress={() => router.replace("/(tabs)/home")}
-      >
+      <Pressable style={styles.skipButton} onPress={handleSkip}>
         <Text style={styles.skipText}>Skip</Text>
       </Pressable>
       <FlatList
@@ -96,7 +106,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.color.secondaryDark,
+    backgroundColor: theme.colors.light.secondaryDark,
   },
   slide: {
     width,
@@ -114,12 +124,12 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.large,
     width: "90%",
     paddingVertical: 15,
-    backgroundColor: theme.color.textNavy,
+    backgroundColor: theme.colors.light.textNavy,
     borderWidth: theme.borderWidth.thin,
-    borderColor: theme.color.textGold,
+    borderColor: theme.colors.light.textGold,
   },
   nextText: {
-    color: theme.color.textGold,
+    color: theme.colors.light.textGold,
     fontSize: theme.font.size.large,
     fontWeight: theme.font.weight.semiBold,
     textAlign: "center",
@@ -138,7 +148,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: theme.radius.medium,
-    backgroundColor: theme.color.primaryDark,
+    backgroundColor: theme.colors.light.primaryDark,
     marginHorizontal: 5,
   },
   activeDot: {
@@ -152,11 +162,11 @@ const styles = StyleSheet.create({
     padding: 10,
     borderWidth: 1,
     borderRadius: theme.radius.medium,
-    borderColor: theme.color.primary,
+    borderColor: theme.colors.light.primary,
   },
 
   skipText: {
-    color: theme.color.textGold,
+    color: theme.colors.light.textGold,
     fontSize: theme.font.size.large,
     fontWeight: theme.font.weight.extraBold,
   },

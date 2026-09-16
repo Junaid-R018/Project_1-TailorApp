@@ -2,57 +2,88 @@
 
 export const theme = {
   // =====================================================
-  // COLORS
+  // DARK / LIGHT COLOR PALETTES
   // =====================================================
-  color: {
-    // Brand Colors
-    primary: "#D4AF37", // Gold
-    primaryDark: "#B8860B", // darkgold
-    primaryLight: "#F4E3A1", //lightgold
 
-    secondary: "#0B1F3A", // Navy Blue
-    secondaryDark: "#061426", // darknavyblue
-    secondaryLight: "#193A63", // lightnavyblue
+  colors: {
+    light: {
+      primary: "#D4AF37",
+      primaryDark: "#B8860B",
+      primaryLight: "#F4E3A1",
 
-    // Background Colors
-    background: "#F8F8F8", ///light white
-    backgroundLight: "#FFFFFF", // white
-    backgroundDark: "#F0F0F0", //gray white
+      secondary: "#0B1F3A",
+      secondaryDark: "#061426",
+      secondaryLight: "#193A63",
 
-    // Text Colors
-    text: "#000000", /// black
-    textSecondary: "#666666", // medium  gray
-    textLight: "#999999", // gray
-    textWhite: "#FFFFFF", // text white
-    textGold: "#D4AF37", //textGold
-    textNavy: "#0B1F3A", //textNavy
+      background: "#F8F8F8",
+      backgroundLight: "#FFFFFF",
+      backgroundDark: "#F0F0F0",
 
-    // Status Colors
-    success: "#2E7D32", // light green
-    successLight: "#E8F5E9", //green white
+      text: "#000000",
+      textSecondary: "#666666",
+      textLight: "#999999",
+      textWhite: "#FFFFFF",
+      textGold: "#D4AF37",
+      textNavy: "#0B1F3A",
 
-    warning: "#ED6C02", // oringe
-    warningLight: "#FFF3E0", // light pink
+      success: "#2E7D32",
+      successLight: "#E8F5E9",
 
-    error: "#D32F2F", // red
-    errorLight: "#FFEBEE", // light red
+      warning: "#ED6C02",
+      warningLight: "#FFF3E0",
 
-    info: "#1976D2", // light blue
-    infoLight: "#E3F2FD", // skyblue
+      error: "#D32F2F",
+      errorLight: "#FFEBEE",
 
-    // UI Colors
-    border: "#E0E0E0", // light gray
-    divider: "#EEEEEE", // x- light gray
-    card: "#FFFFFF", // white
-    input: "#FFFFFF", // white
+      info: "#1976D2",
+      infoLight: "#E3F2FD",
 
-    disabled: "#BDBDBD",
-    disabledBackground: "#EEEEEE",
+      border: "#E0E0E0",
+      divider: "#EEEEEE",
+      card: "#FFFFFF",
+      input: "#FFFFFF",
 
-    overlay: "rgba(0, 0, 0, 0.5)",
-    transparent: "transparent",
+      disabled: "#BDBDBD",
+      disabledBackground: "#EEEEEE",
+
+      overlay: "rgba(0, 0, 0, 0.5)",
+      transparent: "transparent",
+    },
+
+    dark: {
+      primary: "#D4AF37",
+      primaryDark: "#B8860B",
+      primaryLight: "#E8D27A",
+      secondary: "#0B1F3A",
+      secondaryDark: "#061426",
+      secondaryLight: "#193A63",
+      background: "#1E1E1E",
+      backgroundLight: "#F5F5F5",
+      backgroundDark: "#151515",
+      text: "#D4AF37",
+      textSecondary: "#555555",
+      textLight: "#777777",
+      textWhite: "#FFFFFF",
+      textGold: "#D4AF37",
+      textNavy: "#0B1F3A",
+      success: "#2E7D32",
+      successLight: "#E8F5E9",
+      warning: "#ED6C02",
+      warningLight: "#FFF3E0",
+      error: "#D32F2F",
+      errorLight: "#FFEBEE",
+      info: "#1976D2",
+      infoLight: "#E3F2FD",
+      border: "#D4AF37",
+      divider: "#D9D9D9",
+      card: "#F5F5F5",
+      input: "#F5F5F5",
+      disabled: "#888888",
+      disabledBackground: "#444444",
+      overlay: "rgba(0, 0, 0, 0.7)",
+      transparent: "transparent",
+    },
   },
-
   // =====================================================
   // FONTS
   // =====================================================

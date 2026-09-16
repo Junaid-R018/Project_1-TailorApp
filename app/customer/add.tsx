@@ -1,7 +1,13 @@
+import { useLanguage } from "@/app/context/LanguageContext";
+import { useTheme } from "@/app/context/ThemeContext";
 import InputField from "@/components/inputField";
 import MainButton from "@/components/MainButton ";
+import { addCustomer } from "@/sqliteDB/customer";
+import { addOrder } from "@/sqliteDB/order";
+
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { router, Stack } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -16,9 +22,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import DateTimePicker from "@react-native-community/datetimepicker";
-
 const AddCustomer = () => {
+  const { colors } = useTheme();
+  const { t } = useLanguage();
+
   const [firstName, setFirstName] = useState("");
   const [firstNameError, setFirstNameError] = useState("");
 
@@ -39,31 +46,77 @@ const AddCustomer = () => {
     }
   };
 
+  const handleSaveCustomer = async () => {
+    let hasError = false;
+
+    if (!firstName.trim()) {
+      setFirstNameError(t("firstNameRequired"));
+      hasError = true;
+    } else {
+      setFirstNameError("");
+    }
+
+    if (!phone.trim()) {
+      setPhoneError(t("phoneRequired"));
+      hasError = true;
+    } else {
+      setPhoneError("");
+    }
+
+    if (hasError) {
+      return;
+    }
+
+    try {
+      const customerId = await addCustomer(
+        firstName,
+        phone,
+        date.toISOString(),
+        Number(advanceAmount) || 0,
+        notes,
+      );
+
+      console.log("Customer saved successfully:", customerId);
+
+      const orderCode = `ORD-${String(customerId).padStart(3, "0")}`;
+
+      await addOrder(orderCode, customerId, null, 0, date.toISOString());
+
+      console.log("Order created successfully:", orderCode);
+
+      router.back();
+    } catch (error) {
+      console.error("Failed to save customer:", error);
+    }
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <Stack.Screen
           options={{
-            title: "Add New Customer",
+            title: t("addCustomer"),
             headerShown: true,
             headerStyle: {
-              backgroundColor: theme.color.secondaryLight,
+              backgroundColor: colors.secondaryLight,
             },
             headerRight: () => (
               <Pressable onPress={() => setModalVisible(true)}>
                 <Ionicons
                   name="ellipsis-vertical"
                   size={28}
-                  color={theme.color.textWhite}
+                  color={colors.textWhite}
                 />
               </Pressable>
             ),
-            headerTintColor: theme.color.textWhite,
+            headerTintColor: colors.textWhite,
             headerTitleStyle: {
-              color: theme.color.textWhite,
+              color: colors.textWhite,
               fontSize: 20,
               fontWeight: "700",
             },
@@ -73,18 +126,23 @@ const AddCustomer = () => {
         />
 
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { backgroundColor: colors.background },
+          ]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.main}>
-            <Text style={styles.title}>Add New Customer</Text>
+            <Text style={[styles.title, { color: colors.textGold }]}>
+              {t("addCustomer")}
+            </Text>
 
             <View style={styles.form}>
               <InputField
-                label="First Name"
-                placeholder="Enter your full name"
+                label={t("firstName")}
+                placeholder={t("enterFirstName")}
                 autoComplete="name"
                 value={firstName}
                 onChangeText={(text) => {
@@ -97,12 +155,14 @@ const AddCustomer = () => {
               />
 
               {firstNameError ? (
-                <Text style={styles.errorText}>{firstNameError}</Text>
+                <Text style={[styles.errorText, { color: colors.error }]}>
+                  {firstNameError}
+                </Text>
               ) : null}
 
               <InputField
-                label="Phone Number"
-                placeholder="Enter phone number"
+                label={t("phone")}
+                placeholder={t("enterPhone")}
                 keyboardType="phone-pad"
                 value={phone}
                 onChangeText={(text) => {
@@ -115,17 +175,20 @@ const AddCustomer = () => {
               />
 
               {phoneError ? (
-                <Text style={styles.errorText}>{phoneError}</Text>
+                <Text style={[styles.errorText, { color: colors.error }]}>
+                  {phoneError}
+                </Text>
               ) : null}
 
               <InputField
-                label="Due Date"
-                placeholder="Select date"
+                label={t("dueDate")}
+                placeholder={t("selectDate")}
                 value={date.toLocaleDateString("en-GB")}
                 editable={false}
                 rightIcon="calendar-outline"
                 onRightIconPress={() => setShowPicker(true)}
               />
+
               {showPicker && (
                 <DateTimePicker
                   value={date}
@@ -134,23 +197,26 @@ const AddCustomer = () => {
                   onChange={handleDate}
                 />
               )}
+
               <InputField
-                label="Advance Amount"
+                label={t("advanceAmount")}
                 placeholder="Rs."
                 keyboardType="numeric"
                 value={advanceAmount}
                 onChangeText={setAdvanceAmount}
               />
+
               <InputField
                 containerStyle={{ height: 150 }}
-                label="Notes"
-                placeholder="type here..."
+                label={t("notes")}
+                placeholder={t("typeHere")}
                 textAlignVertical="top"
                 multiline={true}
                 value={notes}
                 onChangeText={setNotes}
               />
             </View>
+
             <Modal
               visible={modalVisible}
               transparent
@@ -161,71 +227,110 @@ const AddCustomer = () => {
                 style={styles.modalOverlay}
                 onPress={() => setModalVisible(false)}
               >
-                <Pressable style={styles.bottomSheet}>
-                  <Text style={styles.modalTitle}>Edit Details</Text>
+                <Pressable
+                  style={[
+                    styles.bottomSheet,
+                    {
+                      backgroundColor: colors.backgroundLight,
+                    },
+                  ]}
+                  onPress={(event) => event.stopPropagation()}
+                >
+                  <Text style={[styles.modalTitle, { color: colors.text }]}>
+                    {t("editDetails")}
+                  </Text>
+
                   <Pressable
-                    style={styles.editButton}
+                    style={[
+                      styles.modalButton,
+                      { borderBottomColor: colors.border },
+                    ]}
                     onPress={() => {
                       setModalVisible(false);
                       router.push("/(tabs)/measurements");
                     }}
                   >
-                    <Text style={styles.buttonText}>Edit Measurements</Text>
+                    <Text style={[styles.buttonText, { color: colors.text }]}>
+                      {t("editMeasurement")}
+                    </Text>
+
                     <Ionicons
                       name="create-outline"
                       size={22}
-                      color={theme.color.text}
+                      color={colors.text}
                     />
                   </Pressable>
+
                   <Pressable
-                    style={styles.new_measurements}
+                    style={[
+                      styles.modalButton,
+                      { borderBottomColor: colors.border },
+                    ]}
                     onPress={() => {
                       setModalVisible(false);
                       router.push("/(tabs)/measurements");
                     }}
                   >
-                    <Text style={styles.buttonText}>New Measurements</Text>
+                    <Text style={[styles.buttonText, { color: colors.text }]}>
+                      {t("newMeasurement")}
+                    </Text>
+
                     <Ionicons
                       name="add-circle-outline"
                       size={22}
-                      color={theme.color.text}
+                      color={colors.text}
                     />
                   </Pressable>
+
                   <Pressable
-                    style={styles.all_order}
+                    style={[
+                      styles.modalButton,
+                      { borderBottomColor: colors.border },
+                    ]}
                     onPress={() => {
                       setModalVisible(false);
                       router.push("../orders");
                     }}
                   >
-                    <Text style={styles.buttonText}>All Orders</Text>
+                    <Text style={[styles.buttonText, { color: colors.text }]}>
+                      {t("allOrders")}
+                    </Text>
+
                     <Ionicons
                       name="receipt-outline"
                       size={22}
-                      color={theme.color.text}
+                      color={colors.text}
                     />
                   </Pressable>
+
                   <Pressable
-                    style={styles.del_Button}
+                    style={[
+                      styles.modalButton,
+                      { borderBottomColor: colors.border },
+                    ]}
                     onPress={() => {
                       setModalVisible(false);
-                      // router.push("/(tabs)/measurements");
                     }}
                   >
-                    <Text style={styles.deletebutton}>Delete Customer</Text>
+                    <Text
+                      style={[styles.deleteButton, { color: colors.error }]}
+                    >
+                      {t("deleteCustomer")}
+                    </Text>
 
                     <Ionicons
                       name="trash-outline"
                       size={22}
-                      color={theme.color.error}
+                      color={colors.error}
                     />
                   </Pressable>
                 </Pressable>
               </Pressable>
             </Modal>
+
             <MainButton
-              title="Save Customer"
-              onPress={() => {}}
+              title={t("saveCustomer")}
+              onPress={handleSaveCustomer}
               loading={false}
             />
           </View>
@@ -240,7 +345,6 @@ export default AddCustomer;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.color.background,
   },
 
   scrollContent: {
@@ -254,7 +358,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: theme.font.size.display,
     fontWeight: theme.font.weight.bold,
-    color: theme.color.textGold,
     marginBottom: 25,
   },
 
@@ -262,38 +365,13 @@ const styles = StyleSheet.create({
     width: "100%",
   },
 
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: theme.color.textNavy,
-    marginBottom: 7,
-  },
-
-  dateInput: {
-    width: "100%",
-    height: 52,
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#fff",
-    marginBottom: 20,
-    elevation: 5,
-  },
-
-  dateText: {
-    fontSize: 16,
-    color: theme.color.textNavy,
-  },
-
   errorText: {
-    color: theme.color.error,
     fontSize: 12,
     marginTop: -10,
     marginBottom: 10,
     marginLeft: 5,
   },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -301,46 +379,19 @@ const styles = StyleSheet.create({
   },
 
   bottomSheet: {
-    backgroundColor: theme.color.backgroundLight,
     padding: 20,
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
   },
+
   modalTitle: {
     fontSize: theme.font.size.large,
     fontWeight: "600",
     textAlign: "center",
-    color: theme.color.text,
     marginBottom: 20,
   },
-  editButton: {
-    width: "100%",
-    height: 40,
-    borderBottomWidth: 0.5,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  new_measurements: {
-    width: "100%",
-    height: 40,
-    borderBottomWidth: 0.5,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  all_order: {
-    width: "100%",
-    height: 40,
-    borderBottomWidth: 0.5,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  del_Button: {
+
+  modalButton: {
     width: "100%",
     height: 40,
     borderBottomWidth: 0.5,
@@ -351,12 +402,11 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    color: theme.color.text,
     fontSize: 16,
     fontWeight: "600",
   },
-  deletebutton: {
-    color: theme.color.error,
+
+  deleteButton: {
     fontSize: 16,
     fontWeight: "600",
   },

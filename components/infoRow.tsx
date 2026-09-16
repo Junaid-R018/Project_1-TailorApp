@@ -20,17 +20,17 @@ const styles = StyleSheet.create({
   container: {
     paddingVertical: 14,
     borderBottomWidth: 2,
-    borderBottomColor: theme.color.border,
+    borderBottomColor: theme.colors.light.border,
   },
 
   label: {
     fontSize: 12,
-    color: theme.color.textSecondary,
+    color: theme.colors.light.textSecondary,
   },
 
   value: {
     fontSize: theme.font.size.medium,
-    color: theme.color.text,
+    color: theme.colors.light.text,
     marginTop: 4,
   },
 });

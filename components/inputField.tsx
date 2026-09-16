@@ -1,3 +1,4 @@
+import { useTheme } from "@/app/context/ThemeContext";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import React, { forwardRef } from "react";
@@ -16,35 +17,69 @@ type InputFieldProps = TextInputProps & {
   onRightIconPress?: () => void;
   containerStyle?: any;
 };
+
 const InputField = forwardRef<TextInput, InputFieldProps>(
   (
     {
       label,
       style,
-      containerStyle, // 👈 ADD THIS
+      containerStyle,
       rightIcon,
       onRightIconPress,
       ...inputProps
     },
     ref,
   ) => {
+    const { colors } = useTheme();
+
     return (
       <View style={styles.container}>
-        {/* 👇 APPLY containerStyle HERE */}
-        <View style={[styles.inputContainer, containerStyle]}>
-          <View style={styles.labelContainer}>
-            <Text style={styles.label}>{label}</Text>
+        <View
+          style={[
+            styles.inputContainer,
+            {
+              backgroundColor: colors.background,
+              borderColor: colors.border,
+            },
+            containerStyle,
+          ]}
+        >
+          <View
+            style={[
+              styles.labelContainer,
+              {
+                backgroundColor: colors.background,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: colors.text,
+                },
+              ]}
+            >
+              {label}
+            </Text>
           </View>
 
-          <TextInput ref={ref} style={[styles.input, style]} {...inputProps} />
+          <TextInput
+            ref={ref}
+            style={[
+              styles.input,
+              {
+                color: colors.text,
+              },
+              style,
+            ]}
+            placeholderTextColor={colors.textLight}
+            {...inputProps}
+          />
 
           {rightIcon && (
             <Pressable style={styles.iconButton} onPress={onRightIconPress}>
-              <Ionicons
-                name={rightIcon}
-                size={22}
-                color={theme.color.textGold}
-              />
+              <Ionicons name={rightIcon} size={22} color={colors.textGold} />
             </Pressable>
           )}
         </View>
@@ -66,12 +101,11 @@ const styles = StyleSheet.create({
   inputContainer: {
     position: "relative",
     width: "100%",
-    height: 52, // default height
+    height: 52,
 
-    backgroundColor: theme.color.background,
     borderWidth: 1,
-    borderColor: theme.color.border,
     borderRadius: 8,
+
     elevation: 5,
 
     shadowColor: "#000",
@@ -90,15 +124,12 @@ const styles = StyleSheet.create({
 
     paddingHorizontal: 5,
 
-    backgroundColor: theme.color.disabledBackground,
-
     zIndex: 10,
   },
 
   label: {
     fontSize: theme.font.size.small,
     fontWeight: "400",
-    color: theme.color.text,
   },
 
   input: {
@@ -109,7 +140,6 @@ const styles = StyleSheet.create({
     paddingRight: 55,
 
     fontSize: 15,
-    color: theme.color.text,
   },
 
   iconButton: {

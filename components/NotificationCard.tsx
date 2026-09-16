@@ -14,7 +14,11 @@ const NotificationCard = ({ notificationData }: NotificationCardProps) => {
       <View style={styles.leftBorder} />
 
       <View style={styles.iconContainer}>
-        <Ionicons name="notifications" size={20} color={theme.color.textGold} />
+        <Ionicons
+          name="notifications"
+          size={20}
+          color={theme.colors.light.textGold}
+        />
       </View>
 
       <View style={styles.content}>
@@ -42,7 +46,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: theme.color.textWhite,
+    backgroundColor: theme.colors.light.textWhite,
     marginHorizontal: 15,
     marginVertical: 6,
     borderRadius: 12,
@@ -64,14 +68,14 @@ const styles = StyleSheet.create({
   leftBorder: {
     width: 5,
     height: "100%",
-    backgroundColor: theme.color.textGold,
+    backgroundColor: theme.colors.light.textGold,
   },
 
   iconContainer: {
     width: 42,
     height: 42,
     borderRadius: theme.radius.round,
-    backgroundColor: theme.color.primaryLight,
+    backgroundColor: theme.colors.light.primaryLight,
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 12,
@@ -92,27 +96,27 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: "700",
-    color: theme.color.textNavy,
+    color: theme.colors.light.textNavy,
   },
 
   message: {
     marginTop: 4,
     fontSize: 13,
     lineHeight: 19,
-    color: theme.color.textSecondary,
+    color: theme.colors.light.textSecondary,
   },
 
   time: {
     marginTop: 6,
     fontSize: 11,
-    color: theme.color.textSecondary,
+    color: theme.colors.light.textSecondary,
   },
 
   unreadDot: {
     width: 12,
     height: 12,
     borderRadius: theme.radius.round,
-    backgroundColor: theme.color.primary,
+    backgroundColor: theme.colors.light.primary,
     marginLeft: 8,
   },
 });
