@@ -6,6 +6,7 @@ export type Customer = {
   phone: string;
   due_date: string | null;
   advance_amount: number;
+  address: string | null;
   notes: string | null;
   created_at: string;
 };
@@ -15,14 +16,15 @@ export const addCustomer = async (
   phone: string,
   dueDate: string,
   advanceAmount: number,
+  address: string,
   notes: string,
 ) => {
   const database = await getDatabase();
 
   const sql = `
     INSERT INTO customers
-    (first_name, phone, due_date, advance_amount, notes, created_at)
-    VALUES (?, ?, ?, ?, ?, ?)
+    (first_name, phone, due_date, advance_amount, address, notes, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
 
   console.log("Customer INSERT SQL:", sql);
@@ -32,6 +34,7 @@ export const addCustomer = async (
     phone.trim(),
     dueDate,
     advanceAmount,
+    address.trim(),
     notes.trim(),
     new Date().toISOString(),
   ]);
@@ -67,18 +70,35 @@ export const getCustomerById = async (
 
   return customer ?? null;
 };
-// export const getCustomerById = async (id: number): Promise<Customer | null> => {
-//   const database = await getDatabase();
 
-//   return await database.getFirstAsync<Customer>(
-//     `
-//       SELECT *
-//       FROM customers
-//       WHERE id = ?
-//     `,
-//     [id],
-//   );
-// };
+export const updateCustomer = async (
+  id: number,
+  firstName: string,
+  phone: string,
+  dueDate: string,
+  advanceAmount: number,
+  address: string,
+  notes: string,
+) => {
+  const db = await getDatabase();
+
+  await db.runAsync(
+    `
+    UPDATE customers
+    SET
+      first_name = ?,
+      phone = ?,
+      due_date = ?,
+      advance_amount = ?,
+      address = ?,
+      notes = ?
+    WHERE id = ?
+    `,
+    [firstName, phone, dueDate, advanceAmount, address, notes, id],
+  );
+
+  console.log("Customer updated:", id);
+};
 
 export const deleteCustomer = async (id: number) => {
   const database = await getDatabase();

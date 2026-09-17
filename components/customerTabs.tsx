@@ -24,7 +24,6 @@ export default function CustomerTabs({
         { backgroundColor: colors.card, borderColor: colors.border },
       ]}
     >
-      {" "}
       {tabs.map((tab, index) => (
         <Pressable
           key={tab.key}
@@ -37,7 +36,6 @@ export default function CustomerTabs({
           ]}
           onPress={() => onTabPress(index)}
         >
-          {" "}
           <Text
             style={[
               styles.tabText,
@@ -50,15 +48,14 @@ export default function CustomerTabs({
               activeTab === index && styles.activeTabText,
             ]}
           >
-            {" "}
             {tab.key === "personalInfo"
               ? t("personalInfo")
               : tab.key === "customerMeasurements"
                 ? t("measurements")
-                : t("orders")}{" "}
-          </Text>{" "}
+                : t("orders")}
+          </Text>
         </Pressable>
-      ))}{" "}
+      ))}
     </View>
   );
 }

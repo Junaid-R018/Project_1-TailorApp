@@ -1,5 +1,6 @@
-import { Notification } from "@/Utils/notificationData";
+import { useTheme } from "@/app/context/ThemeContext";
 import { theme } from "@/styles/theme";
+import { Notification } from "@/Utils/notificationData";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -9,16 +10,16 @@ type NotificationCardProps = {
 };
 
 const NotificationCard = ({ notificationData }: NotificationCardProps) => {
+  const { colors } = useTheme();
+
+  const styles = createStyles(colors);
+
   return (
     <View style={[styles.card, !notificationData.read && styles.unreadCard]}>
       <View style={styles.leftBorder} />
 
       <View style={styles.iconContainer}>
-        <Ionicons
-          name="notifications"
-          size={20}
-          color={theme.colors.light.textGold}
-        />
+        <Ionicons name="notifications" size={20} color={colors.textGold} />
       </View>
 
       <View style={styles.content}>
@@ -42,81 +43,82 @@ const NotificationCard = ({ notificationData }: NotificationCardProps) => {
 
 export default NotificationCard;
 
-const styles = StyleSheet.create({
-  card: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: theme.colors.light.textWhite,
-    marginHorizontal: 15,
-    marginVertical: 6,
-    borderRadius: 12,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const createStyles = (colors: any) =>
+  StyleSheet.create({
+    card: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: theme.colors.light.card,
+      marginHorizontal: 15,
+      marginVertical: 6,
+      borderRadius: 12,
+      elevation: 4,
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.12,
+      shadowRadius: 5,
+      overflow: "hidden",
     },
-    shadowOpacity: 0.12,
-    shadowRadius: 5,
-    overflow: "hidden",
-  },
 
-  unreadCard: {
-    backgroundColor: "#FFFDF5",
-  },
+    unreadCard: {
+      backgroundColor: theme.colors.light.divider,
+    },
 
-  leftBorder: {
-    width: 5,
-    height: "100%",
-    backgroundColor: theme.colors.light.textGold,
-  },
+    leftBorder: {
+      width: 5,
+      height: "100%",
+      backgroundColor: colors.textGold,
+    },
 
-  iconContainer: {
-    width: 42,
-    height: 42,
-    borderRadius: theme.radius.round,
-    backgroundColor: theme.colors.light.primaryLight,
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: 12,
-  },
+    iconContainer: {
+      width: 42,
+      height: 42,
+      borderRadius: 999,
+      backgroundColor: colors.primaryLight,
+      justifyContent: "center",
+      alignItems: "center",
+      marginLeft: 12,
+    },
 
-  content: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-  },
+    content: {
+      flex: 1,
+      paddingVertical: 12,
+      paddingHorizontal: 12,
+    },
 
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
 
-  title: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: "700",
-    color: theme.colors.light.textNavy,
-  },
+    title: {
+      flex: 1,
+      fontSize: 15,
+      fontWeight: "700",
+      color: colors.textNavy,
+    },
 
-  message: {
-    marginTop: 4,
-    fontSize: 13,
-    lineHeight: 19,
-    color: theme.colors.light.textSecondary,
-  },
+    message: {
+      marginTop: 4,
+      fontSize: 13,
+      lineHeight: 19,
+      color: colors.textSecondary,
+    },
 
-  time: {
-    marginTop: 6,
-    fontSize: 11,
-    color: theme.colors.light.textSecondary,
-  },
+    time: {
+      marginTop: 6,
+      fontSize: 11,
+      color: colors.textSecondary,
+    },
 
-  unreadDot: {
-    width: 12,
-    height: 12,
-    borderRadius: theme.radius.round,
-    backgroundColor: theme.colors.light.primary,
-    marginLeft: 8,
-  },
-});
+    unreadDot: {
+      width: 12,
+      height: 12,
+      borderRadius: 999,
+      backgroundColor: colors.primary,
+      marginLeft: 8,
+    },
+  });

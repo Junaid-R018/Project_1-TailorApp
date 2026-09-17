@@ -234,7 +234,7 @@ const Login = () => {
                   style={[
                     styles.forgetPassword,
                     {
-                      color: colors.textSecondary,
+                      color: colors.text,
                     },
                   ]}
                 >
@@ -255,11 +255,11 @@ const Login = () => {
             style={[
               styles.signupText,
               {
-                color: colors.textLight,
+                color: colors.text,
               },
             ]}
           >
-            {t("dontHaveAccount")}{" "}
+            {t("dontHaveAccount")}
             <Text
               style={[
                 styles.linkText,

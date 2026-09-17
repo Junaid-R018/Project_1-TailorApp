@@ -1,6 +1,5 @@
 import { useLanguage } from "@/app/context/LanguageContext";
 import { useTheme } from "@/app/context/ThemeContext";
-import { getDatabase } from "@/sqliteDB/database";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -9,6 +8,7 @@ import { File, Paths } from "expo-file-system";
 import { Stack } from "expo-router";
 import * as Sharing from "expo-sharing";
 import React, { useEffect, useState } from "react";
+
 import {
   ActivityIndicator,
   Alert,
@@ -18,6 +18,10 @@ import {
   Text,
   View,
 } from "react-native";
+
+import * as SQLite from "expo-sqlite";
+
+import { closeDatabase, getDatabase, initDatabase } from "@/sqliteDB/database";
 
 const LAST_BACKUP_KEY = "lastBackupDate";
 
@@ -48,60 +52,37 @@ export default function BackupScreen() {
     try {
       setLoading(true);
 
-      // Make sure database is initialized
-      await getDatabase();
-
-      /*
-       * expo-sqlite stores the database in the app's SQLite directory.
-       * We obtain the database directory from the SQLite database object.
-       */
       const db = await getDatabase();
 
-      // Flush pending SQLite operations
-      await db.execAsync("PRAGMA wal_checkpoint(FULL);");
+      // Convert the current SQLite database into binary data
+      const data = await db.serializeAsync();
 
-      const databasePath = db.databasePath;
+      const fileName = `tanposh_backup_${Date.now()}.db`;
 
-      if (!databasePath) {
-        throw new Error("Database path not found");
-      }
+      const backupFile = new File(Paths.cache, fileName);
 
-      const sourceFile = new File(databasePath);
+      // Write database binary data to backup file
+      backupFile.write(data);
 
-      if (!sourceFile.exists) {
-        throw new Error("Database file does not exist");
-      }
+      // Save last backup date
+      const backupDate = new Date().toISOString();
+      await AsyncStorage.setItem(LAST_BACKUP_KEY, backupDate);
 
-      const date = new Date();
+      setLastBackup(backupDate);
 
-      const fileDate = date
-        .toISOString()
-        .replace(/[:.]/g, "-")
-        .replace("T", "_")
-        .slice(0, 19);
-
-      const backupFile = new File(Paths.cache, `tanposh_backup_${fileDate}.db`);
-
-      sourceFile.copy(backupFile);
-
-      await AsyncStorage.setItem(LAST_BACKUP_KEY, date.toISOString());
-
-      setLastBackup(date.toISOString());
-
-      // Open system share/save sheet
+      // Share backup file
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(backupFile.uri, {
-          dialogTitle: t("backupRestore"),
           mimeType: "application/octet-stream",
-          UTI: "public.database",
+          dialogTitle: "Tanposh Database Backup",
         });
       } else {
-        Alert.alert(t("success"), "Backup created successfully.");
+        Alert.alert("Backup Created", "Your backup was created successfully.");
       }
     } catch (error) {
       console.log("Backup error:", error);
 
-      Alert.alert(t("error"), "Unable to create database backup.");
+      Alert.alert("Backup Failed", "Unable to create database backup.");
     } finally {
       setLoading(false);
     }
@@ -110,8 +91,9 @@ export default function BackupScreen() {
   const restoreBackup = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ["application/octet-stream", "*/*"],
+        type: ["application/octet-stream", "application/x-sqlite3", "*/*"],
         copyToCacheDirectory: true,
+        multiple: false,
       });
 
       if (result.canceled) {
@@ -120,62 +102,386 @@ export default function BackupScreen() {
 
       const selectedFile = result.assets[0];
 
+      if (!selectedFile?.uri) {
+        Alert.alert("Restore Failed", "No backup file was selected.");
+        return;
+      }
+
       Alert.alert(
         "Restore Backup",
-        "Restoring this backup will replace your current Tanposh database. Continue?",
+        "Restoring this backup will replace your current customers, orders, measurements, services and profile data. Continue?",
         [
           {
-            text: t("cancel"),
+            text: "Cancel",
             style: "cancel",
           },
           {
             text: "Restore",
             style: "destructive",
             onPress: async () => {
-              try {
-                setLoading(true);
-
-                const db = await getDatabase();
-
-                await db.execAsync("PRAGMA wal_checkpoint(FULL);");
-
-                const databasePath = db.databasePath;
-
-                if (!databasePath) {
-                  throw new Error("Database path not found");
-                }
-
-                const currentDatabase = new File(databasePath);
-                const backupFile = new File(selectedFile.uri);
-
-                if (!backupFile.exists) {
-                  throw new Error("Selected backup does not exist");
-                }
-
-                backupFile.copy(currentDatabase);
-
-                Alert.alert(
-                  t("success"),
-                  "Backup restored successfully. Please restart Tanposh.",
-                );
-              } catch (error) {
-                console.log("Restore error:", error);
-
-                Alert.alert(
-                  t("error"),
-                  "Unable to restore the selected backup.",
-                );
-              } finally {
-                setLoading(false);
-              }
+              await performRestore(selectedFile.uri);
             },
           },
         ],
       );
     } catch (error) {
-      console.log("Document picker error:", error);
+      console.log("Restore selection error:", error);
 
-      Alert.alert(t("error"), "Unable to select backup file.");
+      Alert.alert("Restore Failed", "Unable to select the backup file.");
+    }
+  };
+
+  const performRestore = async (fileUri: string) => {
+    let backupDb: SQLite.SQLiteDatabase | null = null;
+
+    try {
+      setLoading(true);
+
+      console.log("Selected backup URI:", fileUri);
+
+      // =====================================================
+      // 1. Copy selected Google Drive/document file to cache
+      // =====================================================
+
+      const cacheFileName = `restore_${Date.now()}.db`;
+
+      const cachedBackup = new File(Paths.cache, cacheFileName);
+
+      const selectedFile = new File(fileUri);
+
+      // Copy the selected document into our app cache
+      await selectedFile.copy(cachedBackup);
+
+      console.log("Backup copied to cache:", cachedBackup.uri);
+
+      // =====================================================
+      // 2. Read backup as binary data
+      // =====================================================
+
+      const backupBytes = await cachedBackup.bytes();
+
+      console.log("Backup size:", backupBytes.length);
+
+      if (backupBytes.length === 0) {
+        throw new Error("Selected backup file is empty.");
+      }
+
+      // =====================================================
+      // 3. Open backup database temporarily
+      // =====================================================
+
+      backupDb = await SQLite.deserializeDatabaseAsync(backupBytes);
+
+      console.log("Backup database opened successfully");
+
+      // =====================================================
+      // 4. Validate backup tables
+      // =====================================================
+
+      const tables = await backupDb.getAllAsync<{
+        name: string;
+      }>(
+        `
+      SELECT name
+      FROM sqlite_master
+      WHERE type = 'table'
+      AND name NOT LIKE 'sqlite_%'
+      `,
+      );
+
+      const tableNames = tables.map((table) => table.name);
+
+      console.log("Backup tables:", tableNames);
+
+      const requiredTables = [
+        "users",
+        "customers",
+        "services",
+        "orders",
+        "measurements",
+      ];
+
+      const missingTables = requiredTables.filter(
+        (table) => !tableNames.includes(table),
+      );
+
+      if (missingTables.length > 0) {
+        throw new Error(
+          `Invalid Tanposh backup. Missing tables: ${missingTables.join(", ")}`,
+        );
+      }
+
+      // =====================================================
+      // 5. Read all backup data BEFORE touching current DB
+      // =====================================================
+
+      const users = await backupDb.getAllAsync<{
+        id: number;
+        first_name: string;
+        last_name: string;
+        phone: string;
+        password: string;
+        created_at: string;
+      }>("SELECT * FROM users ORDER BY id ASC");
+
+      const customers = await backupDb.getAllAsync<{
+        id: number;
+        first_name: string;
+        phone: string;
+        due_date: string | null;
+        advance_amount: number;
+        address: string;
+        notes: string | null;
+        created_at: string;
+      }>("SELECT * FROM customers ORDER BY id ASC");
+
+      const services = await backupDb.getAllAsync<{
+        id: number;
+        name: string;
+        icon: string | null;
+        is_active: number;
+        created_at: string;
+      }>("SELECT * FROM services ORDER BY id ASC");
+
+      const orders = await backupDb.getAllAsync<{
+        id: number;
+        order_code: string;
+        customer_id: number | null;
+        service_id: number | null;
+        status: string;
+        amount: number;
+        delivery_date: string | null;
+        created_at: string;
+      }>("SELECT * FROM orders ORDER BY id ASC");
+
+      const measurements = await backupDb.getAllAsync<{
+        id: number;
+        customer_id: number;
+        measurements: string;
+        unit: string;
+        notes: string | null;
+        created_at: string;
+      }>("SELECT * FROM measurements ORDER BY id ASC");
+
+      console.log("Backup data:", {
+        users: users.length,
+        customers: customers.length,
+        services: services.length,
+        orders: orders.length,
+        measurements: measurements.length,
+      });
+
+      // =====================================================
+      // 6. Close temporary backup database
+      // =====================================================
+
+      await backupDb.closeAsync();
+      backupDb = null;
+
+      // =====================================================
+      // 7. Close current Tanposh database
+      // =====================================================
+
+      await closeDatabase();
+
+      // =====================================================
+      // 8. Open current Tanposh database
+      // =====================================================
+
+      const database = await getDatabase();
+
+      // =====================================================
+      // 9. Replace current data inside transaction
+      // =====================================================
+
+      await database.withExclusiveTransactionAsync(async (txn) => {
+        // Delete dependent tables first
+        await txn.execAsync(`
+        DELETE FROM measurements;
+        DELETE FROM orders;
+        DELETE FROM customers;
+        DELETE FROM services;
+        DELETE FROM users;
+      `);
+
+        // -------------------------
+        // USERS
+        // -------------------------
+
+        for (const user of users) {
+          await txn.runAsync(
+            `
+          INSERT INTO users (
+            id,
+            first_name,
+            last_name,
+            phone,
+            password,
+            created_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?)
+          `,
+            user.id,
+            user.first_name,
+            user.last_name,
+            user.phone,
+            user.password,
+            user.created_at,
+          );
+        }
+
+        // -------------------------
+        // CUSTOMERS
+        // -------------------------
+
+        for (const customer of customers) {
+          await txn.runAsync(
+            `
+          INSERT INTO customers (
+            id,
+            first_name,
+            phone,
+            due_date,
+            advance_amount,
+            address,
+            notes,
+            created_at
+          )
+          VALUES (?, ?, ?, ?,?, ?, ?, ?)
+          `,
+            customer.id,
+            customer.first_name,
+            customer.phone,
+            customer.due_date,
+            customer.advance_amount,
+            customer.address,
+            customer.notes,
+            customer.created_at,
+          );
+        }
+
+        // -------------------------
+        // SERVICES
+        // -------------------------
+
+        for (const service of services) {
+          await txn.runAsync(
+            `
+          INSERT INTO services (
+            id,
+            name,
+            icon,
+            is_active,
+            created_at
+          )
+          VALUES (?, ?, ?, ?, ?)
+          `,
+            service.id,
+            service.name,
+            service.icon,
+            service.is_active,
+            service.created_at,
+          );
+        }
+
+        // -------------------------
+        // ORDERS
+        // -------------------------
+
+        for (const order of orders) {
+          await txn.runAsync(
+            `
+          INSERT INTO orders (
+            id,
+            order_code,
+            customer_id,
+            service_id,
+            status,
+            amount,
+            delivery_date,
+            created_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          `,
+            order.id,
+            order.order_code,
+            order.customer_id,
+            order.service_id,
+            order.status,
+            order.amount,
+            order.delivery_date,
+            order.created_at,
+          );
+        }
+
+        // -------------------------
+        // MEASUREMENTS
+        // -------------------------
+
+        for (const measurement of measurements) {
+          await txn.runAsync(
+            `
+          INSERT INTO measurements (
+            id,
+            customer_id,
+            measurements,
+            unit,
+            notes,
+            created_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?)
+          `,
+            measurement.id,
+            measurement.customer_id,
+            measurement.measurements,
+            measurement.unit,
+            measurement.notes,
+            measurement.created_at,
+          );
+        }
+      });
+
+      // =====================================================
+      // 10. Reinitialize database
+      // =====================================================
+
+      await initDatabase();
+
+      // =====================================================
+      // 11. Delete temporary cache file
+      // =====================================================
+
+      if (cachedBackup.exists) {
+        cachedBackup.delete();
+      }
+
+      console.log("Database restore completed successfully");
+
+      Alert.alert(
+        "Restore Successful",
+        "Your Tanposh database has been restored successfully. Please restart the app to refresh all screens.",
+      );
+    } catch (error: any) {
+      console.log("=================================");
+      console.log("RESTORE ERROR:", error);
+      console.log("RESTORE MESSAGE:", error?.message);
+      console.log("=================================");
+
+      // Close temporary backup DB if something failed
+      if (backupDb) {
+        try {
+          await backupDb.closeAsync();
+        } catch (closeError) {
+          console.log("Backup DB close error:", closeError);
+        }
+      }
+
+      Alert.alert(
+        "Restore Failed",
+        error?.message || "Unable to restore the selected backup.",
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -246,7 +552,7 @@ export default function BackupScreen() {
             style={[
               styles.description,
               {
-                color: colors.textLight,
+                color: colors.textGold,
               },
             ]}
           >
@@ -411,7 +717,7 @@ export default function BackupScreen() {
           style={[
             styles.warningCard,
             {
-              backgroundColor: colors.disabledBackground,
+              backgroundColor: colors.textWhite,
               borderColor: colors.border,
             },
           ]}

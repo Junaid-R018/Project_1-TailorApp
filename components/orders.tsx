@@ -27,7 +27,8 @@ export default function Orders({ customer }: OrdersProps) {
         try {
           setLoading(true);
           const data = await getOrdersByCustomerId(customer.id);
-          console.log("Orders for customer:", customer.id, data);
+          // console.log("Orders for customer:", customer.id, data);
+
           setOrders(data);
         } catch (error) {
           console.error("Failed to load customer orders:", error);
@@ -40,27 +41,21 @@ export default function Orders({ customer }: OrdersProps) {
   );
   return (
     <View style={[styles.page, { backgroundColor: colors.background }]}>
-      {" "}
       <Text style={[styles.sectionTitle, { color: colors.text }]}>
-        {" "}
-        {t("orders")}{" "}
-      </Text>{" "}
+        {t("orders")}
+      </Text>
       {loading ? (
         <View style={styles.loadingContainer}>
-          {" "}
-          <ActivityIndicator color={colors.primary} />{" "}
+          <ActivityIndicator color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            {" "}
-            {t("loadingOrders")}{" "}
-          </Text>{" "}
+            {t("loadingOrders")}
+          </Text>
         </View>
       ) : orders.length === 0 ? (
         <View style={styles.emptyContainer}>
-          {" "}
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            {" "}
-            {t("noOrdersYet")}{" "}
-          </Text>{" "}
+            {t("noOrdersYet")}
+          </Text>
         </View>
       ) : (
         <FlatList
@@ -70,7 +65,7 @@ export default function Orders({ customer }: OrdersProps) {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
         />
-      )}{" "}
+      )}
     </View>
   );
 }

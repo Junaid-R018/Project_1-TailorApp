@@ -1,4 +1,4 @@
-import { theme } from "@/styles/theme";
+import { useTheme } from "@/app/context/ThemeContext";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Stack } from "expo-router";
 import React from "react";
@@ -33,10 +33,14 @@ const payments: Payment[] = [
 ];
 
 export default function PaymentsScreen() {
+  const { colors } = useTheme();
+
   const totalReceived = payments.reduce(
     (total, payment) => total + payment.amount,
     0,
   );
+
+  const styles = createStyles(colors);
 
   return (
     <>
@@ -46,9 +50,9 @@ export default function PaymentsScreen() {
           title: "Payments",
           headerTitleAlign: "center",
           headerStyle: {
-            backgroundColor: theme.colors.light.secondaryLight,
+            backgroundColor: colors.secondaryLight,
           },
-          headerTintColor: theme.colors.light.textWhite,
+          headerTintColor: colors.textWhite,
         }}
       />
 
@@ -56,11 +60,7 @@ export default function PaymentsScreen() {
         {/* Summary */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryIcon}>
-            <Ionicons
-              name="cash-outline"
-              size={28}
-              color={theme.colors.light.primary}
-            />
+            <Ionicons name="cash-outline" size={28} color={colors.primary} />
           </View>
 
           <View style={styles.summaryContent}>
@@ -75,11 +75,7 @@ export default function PaymentsScreen() {
         {/* Quick Stats */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <Ionicons
-              name="receipt-outline"
-              size={23}
-              color={theme.colors.light.primary}
-            />
+            <Ionicons name="receipt-outline" size={23} color={colors.primary} />
 
             <Text style={styles.statValue}>{payments.length}</Text>
 
@@ -87,11 +83,7 @@ export default function PaymentsScreen() {
           </View>
 
           <View style={styles.statCard}>
-            <Ionicons
-              name="wallet-outline"
-              size={23}
-              color={theme.colors.light.primary}
-            />
+            <Ionicons name="wallet-outline" size={23} color={colors.primary} />
 
             <Text style={styles.statValue}>
               Rs. {totalReceived.toLocaleString()}
@@ -116,13 +108,15 @@ export default function PaymentsScreen() {
           contentContainerStyle={
             payments.length === 0 ? styles.emptyList : styles.list
           }
-          renderItem={({ item }) => <PaymentCard payment={item} />}
+          renderItem={({ item }) => (
+            <PaymentCard payment={item} colors={colors} />
+          )}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons
                 name="wallet-outline"
                 size={55}
-                color={theme.colors.light.primary}
+                color={colors.primary}
               />
 
               <Text style={styles.emptyTitle}>No Payments Yet</Text>
@@ -138,14 +132,16 @@ export default function PaymentsScreen() {
   );
 }
 
-function PaymentCard({ payment }: { payment: Payment }) {
+function PaymentCard({ payment, colors }: { payment: Payment; colors: any }) {
+  const styles = createStyles(colors);
+
   return (
     <Pressable style={styles.paymentCard}>
       <View style={styles.paymentIcon}>
         <Ionicons
           name="checkmark-circle-outline"
           size={25}
-          color={theme.colors.light.secondaryDark}
+          color={colors.secondaryDark}
         />
       </View>
 
@@ -158,16 +154,12 @@ function PaymentCard({ payment }: { payment: Payment }) {
           <Ionicons
             name="calendar-outline"
             size={13}
-            color={theme.colors.light.textLight}
+            color={colors.textLight}
           />
 
           <Text style={styles.detailText}>{payment.date}</Text>
 
-          <Ionicons
-            name="wallet-outline"
-            size={13}
-            color={theme.colors.light.textLight}
-          />
+          <Ionicons name="wallet-outline" size={13} color={colors.textLight} />
 
           <Text style={styles.detailText}>{payment.method}</Text>
         </View>
@@ -184,189 +176,190 @@ function PaymentCard({ payment }: { payment: Payment }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.light.background,
-    paddingHorizontal: 16,
-  },
+const createStyles = (colors: any) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+      paddingHorizontal: 16,
+    },
 
-  summaryCard: {
-    marginTop: 18,
-    padding: 20,
-    borderRadius: 18,
-    backgroundColor: theme.colors.light.primary,
-    flexDirection: "row",
-    alignItems: "center",
-  },
+    summaryCard: {
+      marginTop: 18,
+      padding: 20,
+      borderRadius: 18,
+      backgroundColor: colors.primary,
+      flexDirection: "row",
+      alignItems: "center",
+    },
 
-  summaryIcon: {
-    width: 55,
-    height: 55,
-    borderRadius: theme.radius.medium,
-    backgroundColor: theme.colors.light.secondaryLight,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+    summaryIcon: {
+      width: 55,
+      height: 55,
+      borderRadius: 15,
+      backgroundColor: colors.secondaryLight,
+      alignItems: "center",
+      justifyContent: "center",
+    },
 
-  summaryContent: {
-    marginLeft: 15,
-  },
+    summaryContent: {
+      marginLeft: 15,
+    },
 
-  summaryLabel: {
-    fontSize: theme.font.size.medium,
-    color: theme.colors.light.secondaryLight,
-    opacity: 0.75,
-  },
+    summaryLabel: {
+      fontSize: 14,
+      color: colors.secondaryLight,
+      opacity: 0.75,
+    },
 
-  summaryAmount: {
-    fontSize: 25,
-    fontWeight: "800",
-    color: theme.colors.light.secondaryDark,
-    marginTop: 3,
-  },
+    summaryAmount: {
+      fontSize: 25,
+      fontWeight: "800",
+      color: colors.secondaryDark,
+      marginTop: 3,
+    },
 
-  statsRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 14,
-  },
+    statsRow: {
+      flexDirection: "row",
+      gap: 12,
+      marginTop: 14,
+    },
 
-  statCard: {
-    flex: 1,
-    backgroundColor: theme.colors.light.textWhite,
-    borderRadius: 15,
-    padding: 15,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: theme.colors.light.border,
-  },
+    statCard: {
+      flex: 1,
+      backgroundColor: colors.card,
+      borderRadius: 15,
+      padding: 15,
+      elevation: 4,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
 
-  statValue: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: theme.colors.light.secondaryLight,
-    marginTop: 8,
-  },
+    statValue: {
+      fontSize: 18,
+      fontWeight: "800",
+      color: colors.secondaryLight,
+      marginTop: 8,
+    },
 
-  statLabel: {
-    fontSize: 12,
-    color: theme.colors.light.textLight,
-    marginTop: 2,
-  },
+    statLabel: {
+      fontSize: 12,
+      color: colors.textLight,
+      marginTop: 2,
+    },
 
-  listHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 24,
-    marginBottom: 10,
-  },
+    listHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginTop: 24,
+      marginBottom: 10,
+    },
 
-  listTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: theme.colors.light.secondaryLight,
-  },
+    listTitle: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: colors.text,
+    },
 
-  paymentCount: {
-    fontSize: 12,
-    color: theme.colors.light.textLight,
-  },
+    paymentCount: {
+      fontSize: 12,
+      color: colors.textLight,
+    },
 
-  list: {
-    paddingBottom: 25,
-  },
+    list: {
+      paddingBottom: 25,
+    },
 
-  paymentCard: {
-    backgroundColor: theme.colors.light.textWhite,
-    borderRadius: theme.radius.large,
-    padding: 14,
-    marginBottom: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    elevation: 4,
-    borderColor: theme.colors.light.border,
-  },
+    paymentCard: {
+      backgroundColor: colors.card,
+      borderRadius: 18,
+      padding: 14,
+      marginBottom: 10,
+      flexDirection: "row",
+      alignItems: "center",
+      borderWidth: 1,
+      elevation: 4,
+      borderColor: colors.border,
+    },
 
-  paymentIcon: {
-    width: 45,
-    height: 45,
-    borderRadius: 23,
-    backgroundColor: theme.colors.light.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+    paymentIcon: {
+      width: 45,
+      height: 45,
+      borderRadius: 23,
+      backgroundColor: colors.primary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
 
-  paymentInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
+    paymentInfo: {
+      flex: 1,
+      marginLeft: 12,
+    },
 
-  customerName: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: theme.colors.light.text,
-  },
+    customerName: {
+      fontSize: 15,
+      fontWeight: "700",
+      color: colors.text,
+    },
 
-  orderText: {
-    fontSize: 12,
-    color: theme.colors.light.textLight,
-    marginTop: 2,
-  },
+    orderText: {
+      fontSize: 12,
+      color: colors.textLight,
+      marginTop: 2,
+    },
 
-  detailsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 7,
-    gap: 4,
-  },
+    detailsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 7,
+      gap: 4,
+    },
 
-  detailText: {
-    fontSize: 11,
-    color: theme.colors.light.textLight,
-    marginRight: 7,
-  },
+    detailText: {
+      fontSize: 11,
+      color: colors.textLight,
+      marginRight: 7,
+    },
 
-  amountContainer: {
-    alignItems: "flex-end",
-  },
+    amountContainer: {
+      alignItems: "flex-end",
+    },
 
-  amount: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: theme.colors.light.success,
-  },
+    amount: {
+      fontSize: 13,
+      fontWeight: "800",
+      color: colors.success,
+    },
 
-  paidText: {
-    fontSize: 11,
-    color: theme.colors.light.textLight,
-    marginTop: 3,
-  },
+    paidText: {
+      fontSize: 11,
+      color: colors.textLight,
+      marginTop: 3,
+    },
 
-  emptyList: {
-    flexGrow: 1,
-    justifyContent: "center",
-  },
+    emptyList: {
+      flexGrow: 1,
+      justifyContent: "center",
+    },
 
-  emptyContainer: {
-    alignItems: "center",
-    paddingHorizontal: 30,
-  },
+    emptyContainer: {
+      alignItems: "center",
+      paddingHorizontal: 30,
+    },
 
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: theme.colors.light.secondaryLight,
-    marginTop: 12,
-  },
+    emptyTitle: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: colors.secondaryLight,
+      marginTop: 12,
+    },
 
-  emptyText: {
-    textAlign: "center",
-    fontSize: 13,
-    lineHeight: 20,
-    color: theme.colors.light.textLight,
-    marginTop: 5,
-  },
-});
+    emptyText: {
+      textAlign: "center",
+      fontSize: 13,
+      lineHeight: 20,
+      color: colors.textLight,
+      marginTop: 5,
+    },
+  });

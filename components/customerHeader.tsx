@@ -15,22 +15,17 @@ export default function CustomerHeader({ customer }: CustomerHeaderProps) {
         { borderColor: colors.border, backgroundColor: colors.card },
       ]}
     >
-      {" "}
       <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-        {" "}
-        <Ionicons name="person" size={24} color={colors.secondaryDark} />{" "}
-      </View>{" "}
+        <Ionicons name="person" size={24} color={colors.secondaryDark} />
+      </View>
       <View>
-        {" "}
         <Text style={[styles.customerName, { color: colors.text }]}>
-          {" "}
-          {customer.first_name}{" "}
-        </Text>{" "}
+          {customer.first_name}
+        </Text>
         <Text style={[styles.customerPhone, { color: colors.textSecondary }]}>
-          {" "}
-          {customer.phone}{" "}
-        </Text>{" "}
-      </View>{" "}
+          {customer.phone}
+        </Text>
+      </View>
     </View>
   );
 }

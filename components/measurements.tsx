@@ -34,7 +34,7 @@ export default function Measurements({ customer }: MeasurementsProps) {
         try {
           setLoading(true);
           const data = await getCustomerMeasurements(customer.id);
-          console.log("Customer Measurements:", data);
+          // console.log("Customer Measurements:", data);
           setMeasurements(data);
           if (data.length > 0) {
             setSelectedMeasurement(data[0]);
@@ -95,42 +95,34 @@ export default function Measurements({ customer }: MeasurementsProps) {
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
-      {" "}
-      {/* ================= CURRENT MEASUREMENT ================= */}{" "}
+      {/* ================= CURRENT MEASUREMENT ================= */}
       <Text style={[styles.sectionTitle, { color: colors.text }]}>
-        {" "}
         {selectedMeasurement &&
         measurements.length > 0 &&
         selectedMeasurement.id === measurements[0].id
           ? t("currentMeasurements")
-          : t("measurementDetails")}{" "}
-      </Text>{" "}
+          : t("measurementDetails")}
+      </Text>
       {loading ? (
         <View style={styles.loadingContainer}>
-          {" "}
-          <ActivityIndicator color={colors.primary} />{" "}
+          <ActivityIndicator color={colors.primary} />
           <Text style={[styles.message, { color: colors.textSecondary }]}>
-            {" "}
-            {t("loadingMeasurements")}{" "}
-          </Text>{" "}
+            {t("loadingMeasurements")}
+          </Text>
         </View>
       ) : selectedMeasurement && parsedMeasurements ? (
         <>
-          {" "}
           <View
             style={[styles.measurementCard, { backgroundColor: colors.card }]}
           >
-            {" "}
             <ScrollView
               nestedScrollEnabled
               showsVerticalScrollIndicator={true}
               contentContainerStyle={styles.measurementContent}
             >
-              {" "}
               {filledSections.length > 0 ? (
                 filledSections.map(([sectionName, section]) => (
                   <View key={sectionName} style={styles.measurementSection}>
-                    {" "}
                     <Text
                       style={[
                         styles.measurementSectionTitle,
@@ -140,9 +132,8 @@ export default function Measurements({ customer }: MeasurementsProps) {
                         },
                       ]}
                     >
-                      {" "}
-                      {formatSectionName(sectionName)}{" "}
-                    </Text>{" "}
+                      {formatSectionName(sectionName)}
+                    </Text>
                     {Object.entries(section).map(([fieldName, value]) => {
                       if (
                         value === undefined ||
@@ -159,70 +150,66 @@ export default function Measurements({ customer }: MeasurementsProps) {
                             { borderBottomColor: colors.border },
                           ]}
                         >
-                          {" "}
                           <Text
                             style={[
                               styles.label,
                               { color: colors.textSecondary },
                             ]}
                           >
-                            {" "}
-                            {formatFieldName(fieldName)}{" "}
-                          </Text>{" "}
+                            {formatFieldName(fieldName)}
+                          </Text>
                           <Text style={[styles.value, { color: colors.text }]}>
-                            {" "}
-                            {value} {selectedMeasurement.unit}{" "}
-                          </Text>{" "}
+                            {value} {selectedMeasurement.unit}
+                          </Text>
                         </View>
                       );
-                    })}{" "}
+                    })}
                   </View>
                 ))
               ) : (
                 <Text
                   style={[styles.emptyText, { color: colors.textSecondary }]}
                 >
-                  {" "}
-                  {t("noMeasurementDetails")}{" "}
+                  {t("noMeasurementDetails")}
                 </Text>
-              )}{" "}
-            </ScrollView>{" "}
-          </View>{" "}
+              )}
+            </ScrollView>
+          </View>
           {selectedMeasurement.notes ? (
             <View style={[styles.notesCard, { backgroundColor: colors.card }]}>
-              {" "}
               <Text style={[styles.notesTitle, { color: colors.text }]}>
-                {" "}
-                {t("notes")}{" "}
-              </Text>{" "}
-              <Text style={[styles.notesText, { color: colors.textSecondary }]}>
-                {" "}
-                {selectedMeasurement.notes}{" "}
-              </Text>{" "}
+                {t("notes")}
+              </Text>
+
+              <Text
+                style={[
+                  styles.notesText,
+                  {
+                    color: colors.textSecondary,
+                  },
+                ]}
+              >
+                {selectedMeasurement.notes}
+              </Text>
             </View>
-          ) : null}{" "}
+          ) : null}
         </>
       ) : (
         <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
-          {" "}
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            {" "}
-            {t("noMeasurements")}{" "}
-          </Text>{" "}
+            {t("noMeasurements")}
+          </Text>
         </View>
-      )}{" "}
-      {/* ================= HISTORY ================= */}{" "}
+      )}
+      {/* ================= HISTORY ================= */}
       <Text style={[styles.sectionTitle, { color: colors.text }]}>
-        {" "}
-        {t("measurementHistory")}{" "}
-      </Text>{" "}
+        {t("measurementHistory")}
+      </Text>
       {!loading && measurements.length === 0 ? (
         <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
-          {" "}
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            {" "}
-            {t("noMeasurementHistory")}{" "}
-          </Text>{" "}
+            {t("noMeasurementHistory")}
+          </Text>
         </View>
       ) : (
         measurements.map((measurement, index) => {
@@ -238,41 +225,33 @@ export default function Measurements({ customer }: MeasurementsProps) {
                 pressed && styles.historyPressed,
               ]}
             >
-              {" "}
               <View style={styles.historyLeft}>
-                {" "}
                 <Text style={[styles.date, { color: colors.text }]}>
-                  {" "}
-                  {formatDate(measurement.created_at)}{" "}
-                </Text>{" "}
+                  {formatDate(measurement.created_at)}
+                </Text>
                 <Text
                   style={[styles.historyType, { color: colors.textSecondary }]}
                 >
-                  {" "}
                   {index === 0
                     ? t("currentMeasurement")
-                    : t("previousMeasurement")}{" "}
-                </Text>{" "}
+                    : t("previousMeasurement")}
+                </Text>
                 <Text style={[styles.unit, { color: colors.textSecondary }]}>
-                  {" "}
-                  {t("unit")}: {measurement.unit}{" "}
-                </Text>{" "}
-              </View>{" "}
+                  {t("unit")}: {measurement.unit}
+                </Text>
+              </View>
               <View style={styles.historyRight}>
-                {" "}
                 <Text style={[styles.viewText, { color: colors.primaryDark }]}>
-                  {" "}
-                  {t("view")}{" "}
-                </Text>{" "}
+                  {t("view")}
+                </Text>
                 <Text style={[styles.arrow, { color: colors.secondaryLight }]}>
-                  {" "}
-                  ›{" "}
-                </Text>{" "}
-              </View>{" "}
+                  ›
+                </Text>
+              </View>
             </Pressable>
           );
         })
-      )}{" "}
+      )}
     </ScrollView>
   );
 }

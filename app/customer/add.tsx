@@ -2,14 +2,18 @@ import { useLanguage } from "@/app/context/LanguageContext";
 import { useTheme } from "@/app/context/ThemeContext";
 import InputField from "@/components/inputField";
 import MainButton from "@/components/MainButton ";
-import { addCustomer } from "@/sqliteDB/customer";
+import {
+  addCustomer,
+  getCustomerById,
+  updateCustomer,
+} from "@/sqliteDB/customer";
 import { addOrder } from "@/sqliteDB/order";
 
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { router, Stack } from "expo-router";
-import React, { useState } from "react";
+import { router, Stack, useLocalSearchParams } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -20,7 +24,6 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const AddCustomer = () => {
   const { colors } = useTheme();
@@ -28,6 +31,7 @@ const AddCustomer = () => {
 
   const [firstName, setFirstName] = useState("");
   const [firstNameError, setFirstNameError] = useState("");
+  const [address, setAddress] = useState("");
 
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
@@ -37,6 +41,41 @@ const AddCustomer = () => {
   const [advanceAmount, setAdvanceAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
+
+  const { customerId, mode } = useLocalSearchParams<{
+    customerId?: string;
+    mode?: string;
+  }>();
+
+  const isEditMode = mode === "edit";
+
+  useEffect(() => {
+    const loadCustomer = async () => {
+      if (!isEditMode || !customerId) return;
+
+      try {
+        const customer = await getCustomerById(Number(customerId));
+
+        if (!customer) return;
+
+        setFirstName(customer.first_name || "");
+        setPhone(customer.phone || "");
+        setAdvanceAmount(customer.advance_amount?.toString() || "");
+        setAddress(customer.address || "");
+        setNotes(customer.notes || "");
+
+        if (customer.due_date) {
+          setDate(new Date(customer.due_date));
+        }
+
+        console.log("Customer loaded for editing:", customer);
+      } catch (error) {
+        console.error("Failed to load customer:", error);
+      }
+    };
+
+    loadCustomer();
+  }, [isEditMode, customerId]);
 
   const handleDate = (event: any, selectedDate?: Date) => {
     setShowPicker(false);
@@ -68,19 +107,43 @@ const AddCustomer = () => {
     }
 
     try {
-      const customerId = await addCustomer(
+      // =========================
+      // EDIT CUSTOMER
+      // =========================
+      if (isEditMode && customerId) {
+        await updateCustomer(
+          Number(customerId),
+          firstName,
+          phone,
+          date.toISOString(),
+          Number(advanceAmount) || 0,
+          address,
+          notes,
+        );
+
+        console.log("Customer updated successfully");
+
+        router.back();
+        return;
+      }
+
+      // =========================
+      // ADD NEW CUSTOMER
+      // =========================
+      const newCustomerId = await addCustomer(
         firstName,
         phone,
         date.toISOString(),
         Number(advanceAmount) || 0,
+        address,
         notes,
       );
 
-      console.log("Customer saved successfully:", customerId);
+      console.log("Customer saved successfully:", newCustomerId);
 
-      const orderCode = `ORD-${String(customerId).padStart(3, "0")}`;
+      const orderCode = `ORD-${String(newCustomerId).padStart(3, "0")}`;
 
-      await addOrder(orderCode, customerId, null, 0, date.toISOString());
+      await addOrder(orderCode, newCustomerId, null, 0, date.toISOString());
 
       console.log("Order created successfully:", orderCode);
 
@@ -91,252 +154,248 @@ const AddCustomer = () => {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      <Stack.Screen
+        options={{
+          title: isEditMode ? t("editCustomer") : t("addCustomer"),
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: colors.secondaryLight,
+          },
+          headerRight: () => (
+            <Pressable onPress={() => setModalVisible(true)}>
+              <Ionicons
+                name="ellipsis-vertical"
+                size={28}
+                color={colors.textWhite}
+              />
+            </Pressable>
+          ),
+          headerTintColor: colors.textWhite,
+          headerTitleStyle: {
+            color: colors.textWhite,
+            fontSize: 20,
+            fontWeight: "700",
+          },
+          headerTitleAlign: "center",
+          headerShadowVisible: true,
+        }}
+      />
+
+      <ScrollView
+        contentContainerStyle={[{ backgroundColor: colors.background }]}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        showsVerticalScrollIndicator={false}
       >
-        <Stack.Screen
-          options={{
-            title: t("addCustomer"),
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: colors.secondaryLight,
-            },
-            headerRight: () => (
-              <Pressable onPress={() => setModalVisible(true)}>
-                <Ionicons
-                  name="ellipsis-vertical"
-                  size={28}
-                  color={colors.textWhite}
-                />
-              </Pressable>
-            ),
-            headerTintColor: colors.textWhite,
-            headerTitleStyle: {
-              color: colors.textWhite,
-              fontSize: 20,
-              fontWeight: "700",
-            },
-            headerTitleAlign: "center",
-            headerShadowVisible: true,
-          }}
-        />
+        <View style={styles.main}>
+          <Text style={[styles.title, { color: colors.textGold }]}>
+            {isEditMode ? t("editCustomer") : t("addCustomer")}
+          </Text>
+          <View style={styles.form}>
+            <InputField
+              label={t("firstName")}
+              placeholder={t("enterFirstName")}
+              autoComplete="name"
+              value={firstName}
+              onChangeText={(text) => {
+                setFirstName(text);
 
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { backgroundColor: colors.background },
-          ]}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.main}>
-            <Text style={[styles.title, { color: colors.textGold }]}>
-              {t("addCustomer")}
-            </Text>
+                if (text.trim()) {
+                  setFirstNameError("");
+                }
+              }}
+            />
 
-            <View style={styles.form}>
-              <InputField
-                label={t("firstName")}
-                placeholder={t("enterFirstName")}
-                autoComplete="name"
-                value={firstName}
-                onChangeText={(text) => {
-                  setFirstName(text);
+            {firstNameError ? (
+              <Text style={[styles.errorText, { color: colors.error }]}>
+                {firstNameError}
+              </Text>
+            ) : null}
 
-                  if (text.trim()) {
-                    setFirstNameError("");
-                  }
-                }}
+            <InputField
+              label={t("phone")}
+              placeholder={t("enterPhone")}
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={(text) => {
+                setPhone(text);
+
+                if (text.trim()) {
+                  setPhoneError("");
+                }
+              }}
+            />
+
+            {phoneError ? (
+              <Text style={[styles.errorText, { color: colors.error }]}>
+                {phoneError}
+              </Text>
+            ) : null}
+
+            <InputField
+              label={t("dueDate")}
+              placeholder={t("selectDate")}
+              value={date.toLocaleDateString("en-GB")}
+              editable={false}
+              rightIcon="calendar-outline"
+              onRightIconPress={() => setShowPicker(true)}
+            />
+
+            {showPicker && (
+              <DateTimePicker
+                value={date}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={handleDate}
               />
+            )}
 
-              {firstNameError ? (
-                <Text style={[styles.errorText, { color: colors.error }]}>
-                  {firstNameError}
-                </Text>
-              ) : null}
-
-              <InputField
-                label={t("phone")}
-                placeholder={t("enterPhone")}
-                keyboardType="phone-pad"
-                value={phone}
-                onChangeText={(text) => {
-                  setPhone(text);
-
-                  if (text.trim()) {
-                    setPhoneError("");
-                  }
-                }}
-              />
-
-              {phoneError ? (
-                <Text style={[styles.errorText, { color: colors.error }]}>
-                  {phoneError}
-                </Text>
-              ) : null}
-
-              <InputField
-                label={t("dueDate")}
-                placeholder={t("selectDate")}
-                value={date.toLocaleDateString("en-GB")}
-                editable={false}
-                rightIcon="calendar-outline"
-                onRightIconPress={() => setShowPicker(true)}
-              />
-
-              {showPicker && (
-                <DateTimePicker
-                  value={date}
-                  mode="date"
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
-                  onChange={handleDate}
-                />
-              )}
-
-              <InputField
-                label={t("advanceAmount")}
-                placeholder="Rs."
-                keyboardType="numeric"
-                value={advanceAmount}
-                onChangeText={setAdvanceAmount}
-              />
-
-              <InputField
-                containerStyle={{ height: 150 }}
-                label={t("notes")}
-                placeholder={t("typeHere")}
-                textAlignVertical="top"
-                multiline={true}
-                value={notes}
-                onChangeText={setNotes}
-              />
-            </View>
-
-            <Modal
-              visible={modalVisible}
-              transparent
-              animationType="slide"
-              onRequestClose={() => setModalVisible(false)}
-            >
-              <Pressable
-                style={styles.modalOverlay}
-                onPress={() => setModalVisible(false)}
-              >
-                <Pressable
-                  style={[
-                    styles.bottomSheet,
-                    {
-                      backgroundColor: colors.backgroundLight,
-                    },
-                  ]}
-                  onPress={(event) => event.stopPropagation()}
-                >
-                  <Text style={[styles.modalTitle, { color: colors.text }]}>
-                    {t("editDetails")}
-                  </Text>
-
-                  <Pressable
-                    style={[
-                      styles.modalButton,
-                      { borderBottomColor: colors.border },
-                    ]}
-                    onPress={() => {
-                      setModalVisible(false);
-                      router.push("/(tabs)/measurements");
-                    }}
-                  >
-                    <Text style={[styles.buttonText, { color: colors.text }]}>
-                      {t("editMeasurement")}
-                    </Text>
-
-                    <Ionicons
-                      name="create-outline"
-                      size={22}
-                      color={colors.text}
-                    />
-                  </Pressable>
-
-                  <Pressable
-                    style={[
-                      styles.modalButton,
-                      { borderBottomColor: colors.border },
-                    ]}
-                    onPress={() => {
-                      setModalVisible(false);
-                      router.push("/(tabs)/measurements");
-                    }}
-                  >
-                    <Text style={[styles.buttonText, { color: colors.text }]}>
-                      {t("newMeasurement")}
-                    </Text>
-
-                    <Ionicons
-                      name="add-circle-outline"
-                      size={22}
-                      color={colors.text}
-                    />
-                  </Pressable>
-
-                  <Pressable
-                    style={[
-                      styles.modalButton,
-                      { borderBottomColor: colors.border },
-                    ]}
-                    onPress={() => {
-                      setModalVisible(false);
-                      router.push("../orders");
-                    }}
-                  >
-                    <Text style={[styles.buttonText, { color: colors.text }]}>
-                      {t("allOrders")}
-                    </Text>
-
-                    <Ionicons
-                      name="receipt-outline"
-                      size={22}
-                      color={colors.text}
-                    />
-                  </Pressable>
-
-                  <Pressable
-                    style={[
-                      styles.modalButton,
-                      { borderBottomColor: colors.border },
-                    ]}
-                    onPress={() => {
-                      setModalVisible(false);
-                    }}
-                  >
-                    <Text
-                      style={[styles.deleteButton, { color: colors.error }]}
-                    >
-                      {t("deleteCustomer")}
-                    </Text>
-
-                    <Ionicons
-                      name="trash-outline"
-                      size={22}
-                      color={colors.error}
-                    />
-                  </Pressable>
-                </Pressable>
-              </Pressable>
-            </Modal>
-
-            <MainButton
-              title={t("saveCustomer")}
-              onPress={handleSaveCustomer}
-              loading={false}
+            <InputField
+              label={t("advanceAmount")}
+              placeholder="Rs."
+              keyboardType="numeric"
+              value={advanceAmount}
+              onChangeText={setAdvanceAmount}
+            />
+            <InputField
+              label={t("Address")}
+              placeholder="Address"
+              value={address}
+              onChangeText={setAddress}
+              multiline={true}
+              textAlignVertical="top"
+              containerStyle={{ height: 120 }}
+            />
+            <InputField
+              containerStyle={{ height: 150 }}
+              label={t("notes")}
+              placeholder={t("typeHere")}
+              textAlignVertical="top"
+              multiline={true}
+              value={notes}
+              onChangeText={setNotes}
             />
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          <Modal
+            visible={modalVisible}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <Pressable
+              style={styles.modalOverlay}
+              onPress={() => setModalVisible(false)}
+            >
+              <Pressable
+                style={[
+                  styles.bottomSheet,
+                  {
+                    backgroundColor: colors.backgroundLight,
+                  },
+                ]}
+                onPress={(event) => event.stopPropagation()}
+              >
+                <Text style={[styles.modalTitle, { color: colors.text }]}>
+                  {t("editDetails")}
+                </Text>
+
+                <Pressable
+                  style={[
+                    styles.modalButton,
+                    { borderBottomColor: colors.border },
+                  ]}
+                  onPress={() => {
+                    setModalVisible(false);
+                    router.push("/(tabs)/measurements");
+                  }}
+                >
+                  <Text style={[styles.buttonText, { color: colors.text }]}>
+                    {t("editMeasurement")}
+                  </Text>
+
+                  <Ionicons
+                    name="create-outline"
+                    size={22}
+                    color={colors.text}
+                  />
+                </Pressable>
+
+                <Pressable
+                  style={[
+                    styles.modalButton,
+                    { borderBottomColor: colors.border },
+                  ]}
+                  onPress={() => {
+                    setModalVisible(false);
+                    router.push("/(tabs)/measurements");
+                  }}
+                >
+                  <Text style={[styles.buttonText, { color: colors.text }]}>
+                    {t("newMeasurement")}
+                  </Text>
+
+                  <Ionicons
+                    name="add-circle-outline"
+                    size={22}
+                    color={colors.text}
+                  />
+                </Pressable>
+
+                <Pressable
+                  style={[
+                    styles.modalButton,
+                    { borderBottomColor: colors.border },
+                  ]}
+                  onPress={() => {
+                    setModalVisible(false);
+                    router.push("../orders");
+                  }}
+                >
+                  <Text style={[styles.buttonText, { color: colors.text }]}>
+                    {t("allOrders")}
+                  </Text>
+
+                  <Ionicons
+                    name="receipt-outline"
+                    size={22}
+                    color={colors.text}
+                  />
+                </Pressable>
+
+                <Pressable
+                  style={[
+                    styles.modalButton,
+                    { borderBottomColor: colors.border },
+                  ]}
+                  onPress={() => {
+                    setModalVisible(false);
+                  }}
+                >
+                  <Text style={[styles.deleteButton, { color: colors.error }]}>
+                    {t("deleteCustomer")}
+                  </Text>
+
+                  <Ionicons
+                    name="trash-outline"
+                    size={22}
+                    color={colors.error}
+                  />
+                </Pressable>
+              </Pressable>
+            </Pressable>
+          </Modal>
+          <MainButton
+            title={isEditMode ? t("updateCustomer") : t("saveCustomer")}
+            onPress={handleSaveCustomer}
+            loading={false}
+          />
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -347,10 +406,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  scrollContent: {
-    padding: 10,
-  },
-
   main: {
     alignItems: "center",
   },
@@ -358,11 +413,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: theme.font.size.display,
     fontWeight: theme.font.weight.bold,
-    marginBottom: 25,
   },
 
   form: {
     width: "100%",
+    paddingHorizontal: 10,
+    marginTop: 20,
   },
 
   errorText: {

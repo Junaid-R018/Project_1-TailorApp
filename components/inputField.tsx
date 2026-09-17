@@ -48,7 +48,7 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
             style={[
               styles.labelContainer,
               {
-                backgroundColor: colors.background,
+                backgroundColor: colors.card,
               },
             ]}
           >
@@ -95,18 +95,18 @@ export default InputField;
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    marginBottom: 15,
+    // marginBottom: 15,
   },
 
   inputContainer: {
     position: "relative",
     width: "100%",
     height: 52,
-
+    marginBottom: 12,
     borderWidth: 1,
-    borderRadius: 8,
-
+    borderRadius: theme.radius.large,
     elevation: 5,
+    backgroundColor: theme.colors.light.divider,
 
     shadowColor: "#000",
     shadowOffset: {
@@ -121,10 +121,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 8,
     top: -9,
-
     paddingHorizontal: 5,
-
     zIndex: 10,
+    borderRadius: theme.radius.medium,
   },
 
   label: {
@@ -135,10 +134,9 @@ const styles = StyleSheet.create({
   input: {
     width: "100%",
     height: "100%",
-
-    paddingHorizontal: 15,
-    paddingRight: 55,
-
+    borderRadius: theme.radius.large,
+    paddingHorizontal: 10,
+    backgroundColor: theme.colors.light.divider,
     fontSize: 15,
   },
 
@@ -146,13 +144,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 5,
     top: 0,
-
     height: 50,
     width: 45,
-
     justifyContent: "center",
     alignItems: "center",
-
     zIndex: 20,
   },
 });

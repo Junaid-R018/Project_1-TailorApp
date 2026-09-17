@@ -10,6 +10,13 @@ export const getDatabase = async () => {
   return db;
 };
 
+export const closeDatabase = async () => {
+  if (db) {
+    await db.closeAsync();
+    db = null;
+    console.log("SQLite database closed");
+  }
+};
 export const initDatabase = async () => {
   const database = await getDatabase();
 
@@ -24,10 +31,30 @@ export const initDatabase = async () => {
     phone TEXT NOT NULL,
     due_date TEXT,
     advance_amount REAL DEFAULT 0,
+    address TEXT,
     notes TEXT,
     created_at TEXT NOT NULL
   );
 `);
+  try {
+    const columns = await database.getAllAsync<{ name: string }>(
+      `PRAGMA table_info(customers);`,
+    );
+
+    const hasAddress = columns.some((column) => column.name === "address");
+
+    if (!hasAddress) {
+      await database.execAsync(`
+      ALTER TABLE customers ADD COLUMN address TEXT;
+    `);
+
+      console.log("Address column added successfully");
+    } else {
+      console.log("Address column already exists");
+    }
+  } catch (error) {
+    console.error("Failed to migrate customers table:", error);
+  }
 
   // =========================
   // USERS TABLE

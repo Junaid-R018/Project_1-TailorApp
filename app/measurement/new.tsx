@@ -1,4 +1,5 @@
 import { measurementSections } from "@/Utils/measurementData";
+import { Spacer40 } from "@/Utils/spacing";
 import { useLanguage } from "@/app/context/LanguageContext";
 import { useTheme } from "@/app/context/ThemeContext";
 import MainButton from "@/components/MainButton ";
@@ -344,8 +345,7 @@ const MeasurementsScreen = () => {
               onChangeText={setOthers}
             />
           </View>
-
-          {/* Save / Update */}
+          <Spacer40 />
           <MainButton
             title={mode === "edit" ? t("updateMeasurement") : t("save")}
             loading={false}

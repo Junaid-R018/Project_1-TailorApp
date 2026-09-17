@@ -8,8 +8,13 @@ import PersonalInfo from "@/components/personalInfo";
 import { Customer, getCustomerById } from "@/sqliteDB/customer";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { router, Stack, useLocalSearchParams } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import {
+  router,
+  Stack,
+  useFocusEffect,
+  useLocalSearchParams,
+} from "expo-router";
+import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -41,23 +46,25 @@ export default function CustomerDetails() {
     null,
   );
 
-  useEffect(() => {
-    const loadCustomer = async () => {
-      if (!customerId) return;
+  useFocusEffect(
+    useCallback(() => {
+      const loadCustomer = async () => {
+        if (!customerId) return;
 
-      try {
-        const data = await getCustomerById(Number(customerId));
+        try {
+          const data = await getCustomerById(Number(customerId));
 
-        console.log("Selected Customer:", data);
+          // console.log("Selected Customer:", data);
 
-        setSelectedCustomer(data);
-      } catch (error) {
-        console.error("Failed to load customer:", error);
-      }
-    };
+          setSelectedCustomer(data);
+        } catch (error) {
+          console.error("Failed to load customer:", error);
+        }
+      };
 
-    loadCustomer();
-  }, [customerId]);
+      loadCustomer();
+    }, [customerId]),
+  );
 
   // Loading state
   if (!selectedCustomer) {
@@ -223,6 +230,38 @@ export default function CustomerDetails() {
               <Text style={[styles.modalTitle, { color: colors.text }]}>
                 {t("editDetails")}
               </Text>
+
+              {/* Edit Customer */}
+              <Pressable
+                style={[
+                  styles.modalButton,
+                  {
+                    backgroundColor: colors.secondaryLight,
+                    borderColor: colors.primary,
+                  },
+                ]}
+                onPress={() => {
+                  setModalVisible(false);
+
+                  router.push({
+                    pathname: "/customer/add",
+                    params: {
+                      customerId: selectedCustomer.id.toString(),
+                      mode: "edit",
+                    },
+                  });
+                }}
+              >
+                <Ionicons
+                  name="person-outline"
+                  size={22}
+                  color={colors.textWhite}
+                />
+
+                <Text style={[styles.buttonText, { color: colors.textWhite }]}>
+                  {t("editCustomer")}
+                </Text>
+              </Pressable>
 
               {/* Edit Measurements */}
               <Pressable

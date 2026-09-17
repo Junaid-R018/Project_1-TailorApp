@@ -1,5 +1,5 @@
+import { useTheme } from "@/app/context/ThemeContext";
 import NotificationCard from "@/components/NotificationCard";
-import { theme } from "@/styles/theme";
 import { notifications } from "@/Utils/notificationData";
 import { Stack } from "expo-router";
 import React from "react";
@@ -7,6 +7,10 @@ import { FlatList, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const Notifications = () => {
+  const { colors } = useTheme();
+
+  const styles = createStyles(colors);
+
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen
@@ -14,12 +18,11 @@ const Notifications = () => {
           title: "Notifications",
           headerShown: true,
           headerStyle: {
-            backgroundColor: theme.colors.light.secondaryLight,
+            backgroundColor: colors.secondaryLight,
           },
-
-          headerTintColor: theme.colors.light.textWhite,
+          headerTintColor: colors.textWhite,
           headerTitleStyle: {
-            color: theme.colors.light.textWhite,
+            color: colors.textWhite,
             fontSize: 20,
             fontWeight: "700",
           },
@@ -27,10 +30,11 @@ const Notifications = () => {
           headerShadowVisible: true,
         }}
       />
-      <View>
+
+      <View style={styles.content}>
         <FlatList
           data={notifications}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <NotificationCard notificationData={item} />
           )}
@@ -44,13 +48,18 @@ const Notifications = () => {
 
 export default Notifications;
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.light.background,
-  },
+const createStyles = (colors: any) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
 
-  list: {
-    paddingVertical: 10,
-  },
-});
+    content: {
+      flex: 1,
+    },
+
+    list: {
+      paddingVertical: 10,
+    },
+  });

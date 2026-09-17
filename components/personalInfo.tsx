@@ -19,18 +19,20 @@ export default function PersonalInfo({ customer }: PersonalInfoProps) {
   };
   return (
     <View style={[styles.page, { backgroundColor: colors.background }]}>
-      {" "}
       <Text style={[styles.sectionTitle, { color: colors.text }]}>
-        {" "}
-        {t("personalInfo")}{" "}
-      </Text>{" "}
-      <InfoRow label={t("customerName")} value={customer.first_name} />{" "}
-      <InfoRow label={t("phone")} value={customer.phone} />{" "}
-      {/* <InfoRow label={t("address")} value={customer.address} /> */}{" "}
+        {t("personalInfo")}
+      </Text>
+      <InfoRow label={t("customerName")} value={customer.first_name} />
+      <InfoRow label={t("phone")} value={customer.phone} />
+      <InfoRow
+        label={t("advance Amount")}
+        value={String(customer.advance_amount)}
+      />
+      <InfoRow label={t("address")} value={customer.address ?? ""} />
       <InfoRow
         label={t("customerSince")}
         value={formatDate(customer.created_at)}
-      />{" "}
+      />
     </View>
   );
 }

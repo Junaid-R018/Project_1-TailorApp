@@ -170,7 +170,7 @@ const SignUp = () => {
             Tanposh
           </Text>
 
-          <Text style={[styles.subtitle, { color: colors.secondaryLight }]}>
+          <Text style={[styles.subtitle, { color: colors.text }]}>
             {t("registerContinue")}
           </Text>
         </View>
@@ -340,12 +340,10 @@ const SignUp = () => {
                   setTermsError("");
                 }
               }}
-              color={isChecked ? colors.primary : colors.textLight}
+              color={isChecked ? colors.primary : colors.text}
             />
 
-            <Text
-              style={[styles.checkBoxText, { color: colors.secondaryLight }]}
-            >
+            <Text style={[styles.checkBoxText, { color: colors.text }]}>
               {t("agreeToTerms")}{" "}
               <Text style={[styles.linkText, { color: colors.textGold }]}>
                 {t("termsAndConditions")}
@@ -367,9 +365,8 @@ const SignUp = () => {
         />
 
         <Spacer10 />
-
-        <Text style={[styles.loginText, { color: colors.textLight }]}>
-          {t("alreadyHaveAccount")}{" "}
+        <Text style={[styles.loginText, { color: colors.text }]}>
+          {t("Already have an Account")}{" "}
           <Text
             style={[styles.linkText, { color: colors.textGold }]}
             onPress={() => router.push("/(auth)/login")}
@@ -395,7 +392,7 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 15,
     paddingTop: 25,
     paddingBottom: 40,
   },

@@ -79,7 +79,7 @@ const Greetings = ({ orders }: GreetingsProps) => {
         style={[
           styles.header,
           {
-            backgroundColor: colors.secondaryDark,
+            backgroundColor: colors.secondaryLight,
           },
         ]}
       >

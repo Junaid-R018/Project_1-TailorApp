@@ -140,7 +140,7 @@ export const translations = {
     kameezLength: "Kameez Length",
 
     tailorNotes: "Tailor Notes",
-
+    updateCustomer: "Update Customer",
     // =========================
     // ORDERS
     // =========================
@@ -421,6 +421,7 @@ export const translations = {
     noCustomers: "کوئی صارف نہیں ملا",
     deleteCustomer: "صارف حذف کریں",
     deleteCustomerConfirmation: "کیا آپ واقعی اس صارف کو حذف کرنا چاہتے ہیں؟",
+    updateCustomer: "صارف اپڈیٹ کریں",
 
     // =========================
     // MEASUREMENTS
@@ -552,7 +553,7 @@ export const translations = {
     localStorage: "مقامی اسٹوریج",
     developedBy: "تیار کردہ",
     support: "معاونت",
-    contactSupport: "معاونت سے رابطہ کریں",
+    contactSupport: "معاون سے رابطہ کریں",
     copyright: "© 2026 ٹانپوش",
 
     // =========================

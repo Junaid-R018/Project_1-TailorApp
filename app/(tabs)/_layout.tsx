@@ -1,3 +1,4 @@
+import { useLanguage } from "@/app/context/LanguageContext";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
@@ -5,6 +6,8 @@ import React from "react";
 import { StyleSheet, View } from "react-native";
 
 export default function TabsLayout() {
+  const { t } = useLanguage();
+
   return (
     <Tabs
       screenOptions={{
@@ -16,10 +19,11 @@ export default function TabsLayout() {
         tabBarHideOnKeyboard: true,
       }}
     >
+      {/* Home */}
       <Tabs.Screen
         name="home"
         options={{
-          title: "Home",
+          title: t("home"),
           tabBarIcon: ({ focused, size }) => (
             <View style={[styles.iconContainer, focused && styles.activeIcon]}>
               <Ionicons
@@ -32,10 +36,11 @@ export default function TabsLayout() {
         }}
       />
 
+      {/* Customers */}
       <Tabs.Screen
         name="customers"
         options={{
-          title: "Customers",
+          title: t("customers"),
           tabBarIcon: ({ focused, size }) => (
             <View style={[styles.iconContainer, focused && styles.activeIcon]}>
               <Ionicons
@@ -48,10 +53,11 @@ export default function TabsLayout() {
         }}
       />
 
+      {/* Measurements */}
       <Tabs.Screen
         name="measurements"
         options={{
-          title: "Measurements",
+          title: t("measurements"),
           tabBarIcon: ({ focused, size }) => (
             <View style={[styles.iconContainer, focused && styles.activeIcon]}>
               <Ionicons
@@ -64,10 +70,11 @@ export default function TabsLayout() {
         }}
       />
 
+      {/* Profile */}
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: t("profile"),
           tabBarIcon: ({ focused, size }) => (
             <View style={[styles.iconContainer, focused && styles.activeIcon]}>
               <Ionicons

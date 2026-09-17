@@ -62,10 +62,11 @@ export default function AboutScreen() {
           </View>
 
           <Text style={[styles.appName, { color: colors.secondary }]}>
-            TANPOSH
+            {/* Highlight: use the localized app-name key for Urdu and English. */}
+            {t("appName")}
           </Text>
 
-          <Text style={[styles.tagline, { color: colors.textLight }]}>
+          <Text style={[styles.tagline, { color: colors.textGold }]}>
             {t("smartTailorManagement")}
           </Text>
 
@@ -74,11 +75,11 @@ export default function AboutScreen() {
               styles.versionBadge,
               {
                 borderColor: colors.primary,
-                backgroundColor: colors.secondaryLight,
+                backgroundColor: colors.primary,
               },
             ]}
           >
-            <Text style={[styles.versionText, { color: colors.primary }]}>
+            <Text style={[styles.versionText, { color: colors.secondaryDark }]}>
               {t("version")} 1.0.0
             </Text>
           </View>
@@ -250,7 +251,7 @@ export default function AboutScreen() {
             © 2026 Tanposh
           </Text>
 
-          <Text style={[styles.footerSubText, { color: colors.textLight }]}>
+          <Text style={[styles.footerSubText, { color: colors.textGold }]}>
             {t("footerTagline")}
           </Text>
         </View>
@@ -329,8 +330,8 @@ const styles = StyleSheet.create({
   },
 
   tagline: {
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: theme.font.size.medium,
+    fontWeight: "600",
   },
 
   versionBadge: {

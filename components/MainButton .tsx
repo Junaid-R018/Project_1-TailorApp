@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   parent: {
     width: "90%",
     alignSelf: "center",
-    marginTop: "30%",
+    marginTop: "15%",
   },
 
   btnContainer: {
