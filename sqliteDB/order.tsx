@@ -18,18 +18,31 @@ export type Order = {
   created_at: string;
 };
 
-// Get latest 5 orders
-export const getRecentOrders = async (): Promise<Order[]> => {
+export const getRecentOrders = async (): Promise<OrderWithCustomer[]> => {
   const database = await getDatabase();
 
-  const orders = await database.getAllAsync<Order>(`
-    SELECT *
+  const orders = await database.getAllAsync<OrderWithCustomer>(`
+    SELECT
+      orders.id,
+      orders.order_code,
+      orders.customer_id,
+      orders.service_id,
+      orders.status,
+      orders.amount,
+      orders.delivery_date,
+      orders.created_at,
+
+      customers.first_name AS customerName,
+      customers.phone AS customerPhone
+
     FROM orders
-    ORDER BY id ASC
+
+    LEFT JOIN customers
+      ON orders.customer_id = customers.id
+
+    ORDER BY orders.id DESC
     LIMIT 5
   `);
-
-  // console.log("Orders From DB:", orders);
 
   return orders;
 };
@@ -119,17 +132,36 @@ export const updateOrderStatus = async (
   );
 };
 
-export const getOrdersByCustomerId = async (customerId: number) => {
+export const getOrdersByCustomerId = async (
+  customerId: number,
+): Promise<OrderWithCustomer[]> => {
   const database = await getDatabase();
 
-  const orders = await database.getAllAsync(
+  const orders = await database.getAllAsync<OrderWithCustomer>(
     `
-    SELECT *
+    SELECT
+      orders.id,
+      orders.order_code,
+      orders.customer_id,
+      orders.service_id,
+      orders.status,
+      orders.amount,
+      orders.delivery_date,
+      orders.created_at,
+
+      customers.first_name AS customerName,
+      customers.phone AS customerPhone
+
     FROM orders
-    WHERE customer_id = ?
-    ORDER BY id ASC
-  `,
-    [customerId],
+
+    LEFT JOIN customers
+      ON orders.customer_id = customers.id
+
+    WHERE orders.customer_id = ?
+
+    ORDER BY orders.id DESC
+    `,
+    customerId,
   );
 
   console.log("Orders for customer:", customerId, orders);

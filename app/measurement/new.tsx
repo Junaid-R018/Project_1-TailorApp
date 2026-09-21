@@ -39,7 +39,7 @@ measurementSections.forEach((section) => {
 
 const MeasurementsScreen = () => {
   const { colors } = useTheme();
-  const { t } = useLanguage();
+  const { t, isUrdu } = useLanguage();
 
   const params = useLocalSearchParams<{
     customerId: string;
@@ -298,28 +298,21 @@ const MeasurementsScreen = () => {
                           measurements[section.key]?.[field.key] || "";
 
                         return (
-                          <View key={field.key} style={styles.inputContainer}>
-                            <InputField
-                              label={field.label}
-                              value={convertValue(value)}
-                              keyboardType="decimal-pad"
-                              onChangeText={(text) =>
-                                handleFieldChange(section.key, field.key, text)
-                              }
-                              placeholder={`${t("enter")} ${field.label.toLowerCase()}`}
-                            />
+                          <InputField
+                            key={field.key}
+                            label={field.label}
+                            value={convertValue(value)}
+                            keyboardType="decimal-pad"
+                            onChangeText={(text) =>
+                              handleFieldChange(section.key, field.key, text)
+                            }
+                            placeholder={`${t("enter")} ${field.label.toLowerCase()}`}
+                            unit={unit === "inch" ? "in" : "cm"}
+                            isUrdu={isUrdu}
+                          />
+                          // <View key={field.key} style={styles.inputContainer}>
 
-                            <Text
-                              style={[
-                                styles.unitLabel,
-                                {
-                                  color: colors.textSecondary,
-                                },
-                              ]}
-                            >
-                              {unit === "inch" ? "in" : "cm"}
-                            </Text>
-                          </View>
+                          // </View>
                         );
                       })}
                     </View>
@@ -432,13 +425,6 @@ const styles = StyleSheet.create({
 
   othersInput: {
     minHeight: 120,
-  },
-
-  unitLabel: {
-    position: "absolute",
-    right: 14,
-    top: 20,
-    fontSize: 12,
   },
 
   notesInfo: {

@@ -21,6 +21,7 @@ export default function Orders({ customer }: OrdersProps) {
   const { t } = useLanguage();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
   useFocusEffect(
     useCallback(() => {
       const loadOrders = async () => {

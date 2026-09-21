@@ -16,6 +16,10 @@ type InputFieldProps = TextInputProps & {
   rightIcon?: keyof typeof Ionicons.glyphMap;
   onRightIconPress?: () => void;
   containerStyle?: any;
+
+  // Optional unit shown inside the input
+  unit?: string;
+  isUrdu?: boolean;
 };
 
 const InputField = forwardRef<TextInput, InputFieldProps>(
@@ -26,6 +30,8 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
       containerStyle,
       rightIcon,
       onRightIconPress,
+      unit,
+      isUrdu = false,
       ...inputProps
     },
     ref,
@@ -44,6 +50,7 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
             containerStyle,
           ]}
         >
+          {/* Label */}
           <View
             style={[
               styles.labelContainer,
@@ -64,12 +71,18 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
             </Text>
           </View>
 
+          {/* Input */}
           <TextInput
             ref={ref}
             style={[
               styles.input,
               {
                 color: colors.text,
+                textAlign: isUrdu ? "right" : "left",
+
+                // Keep text away from the unit
+                paddingLeft: unit && isUrdu ? 45 : 10,
+                paddingRight: unit && !isUrdu ? 45 : 10,
               },
               style,
             ]}
@@ -77,6 +90,23 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
             {...inputProps}
           />
 
+          {/* Unit */}
+          {unit && (
+            <Text
+              style={[
+                styles.unit,
+                {
+                  color: colors.textSecondary,
+                  left: isUrdu ? 14 : undefined,
+                  right: !isUrdu ? 14 : undefined,
+                },
+              ]}
+            >
+              {unit}
+            </Text>
+          )}
+
+          {/* Right Icon */}
           {rightIcon && (
             <Pressable style={styles.iconButton} onPress={onRightIconPress}>
               <Ionicons name={rightIcon} size={22} color={colors.textGold} />
@@ -95,7 +125,6 @@ export default InputField;
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    // marginBottom: 15,
   },
 
   inputContainer: {
@@ -135,9 +164,15 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     borderRadius: theme.radius.large,
-    paddingHorizontal: 10,
     backgroundColor: theme.colors.light.divider,
     fontSize: 15,
+  },
+
+  unit: {
+    position: "absolute",
+    top: 17,
+    fontSize: 12,
+    zIndex: 5,
   },
 
   iconButton: {

@@ -1,4 +1,5 @@
 import { getDatabase } from "./database";
+import { notifyDatabaseChanged } from "./dbEvents";
 
 export type Customer = {
   id: number;
@@ -23,11 +24,17 @@ export const addCustomer = async (
 
   const sql = `
     INSERT INTO customers
-    (first_name, phone, due_date, advance_amount, address, notes, created_at)
+    (
+      first_name,
+      phone,
+      due_date,
+      advance_amount,
+      address,
+      notes,
+      created_at
+    )
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
-
-  console.log("Customer INSERT SQL:", sql);
 
   const result = await database.runAsync(sql, [
     firstName.trim(),
@@ -40,6 +47,8 @@ export const addCustomer = async (
   ]);
 
   console.log("Customer added:", result.lastInsertRowId);
+
+  notifyDatabaseChanged();
 
   return result.lastInsertRowId;
 };
@@ -94,22 +103,55 @@ export const updateCustomer = async (
       notes = ?
     WHERE id = ?
     `,
-    [firstName, phone, dueDate, advanceAmount, address, notes, id],
+    [
+      firstName.trim(),
+      phone.trim(),
+      dueDate,
+      advanceAmount,
+      address.trim(),
+      notes.trim(),
+      id,
+    ],
   );
 
   console.log("Customer updated:", id);
+
+  notifyDatabaseChanged();
 };
 
-export const deleteCustomer = async (id: number) => {
+export const deleteCustomer = async (customerId: number) => {
   const database = await getDatabase();
 
-  await database.runAsync(
-    `
+  try {
+    await database.runAsync(
+      `
+      DELETE FROM orders
+      WHERE customer_id = ?
+      `,
+      customerId,
+    );
+
+    await database.runAsync(
+      `
+      DELETE FROM measurements
+      WHERE customer_id = ?
+      `,
+      customerId,
+    );
+
+    await database.runAsync(
+      `
       DELETE FROM customers
       WHERE id = ?
-    `,
-    [id],
-  );
+      `,
+      customerId,
+    );
 
-  console.log("Customer deleted:", id);
+    console.log(`Customer ${customerId} and related data deleted`);
+
+    notifyDatabaseChanged();
+  } catch (error) {
+    console.error("Failed to delete customer:", error);
+    throw error;
+  }
 };

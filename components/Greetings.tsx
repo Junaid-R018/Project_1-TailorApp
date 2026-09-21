@@ -1,6 +1,6 @@
 import { useLanguage } from "@/app/context/LanguageContext";
 import { useTheme } from "@/app/context/ThemeContext";
-import { Order } from "@/sqliteDB/order";
+import { OrderWithCustomer } from "@/sqliteDB/order";
 import { getServices, Service } from "@/sqliteDB/services";
 import { theme } from "@/styles/theme";
 import { Spacer15 } from "@/Utils/spacing";
@@ -18,15 +18,15 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import OrderCard from "./orderCard";
 import ServiceCard from "./ServiceCard";
 
 type GreetingsProps = {
-  orders: Order[];
+  orders: OrderWithCustomer[];
 };
 
 const Greetings = ({ orders }: GreetingsProps) => {
   const { width } = useWindowDimensions();
-
   const { colors } = useTheme();
   const { t } = useLanguage();
 
@@ -265,7 +265,7 @@ const Greetings = ({ orders }: GreetingsProps) => {
             {t("myOrders")}
           </Text>
 
-          <Pressable onPress={() => {}}>
+          <Pressable onPress={() => router.push("/orders")}>
             <Text
               style={[
                 styles.subText,
@@ -302,41 +302,8 @@ const Greetings = ({ orders }: GreetingsProps) => {
           </View>
         ) : (
           orders.map((order) => (
-            <View
-              key={order.id}
-              style={[
-                styles.orderPlaceholder,
-                {
-                  backgroundColor: colors.card,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.noOrdersText,
-                  {
-                    color: colors.text,
-                  },
-                ]}
-              >
-                {order.order_code}
-              </Text>
-
-              <Text
-                style={{
-                  color: colors.text,
-                }}
-              >
-                Rs. {order.amount}
-              </Text>
-
-              <Text
-                style={{
-                  color: colors.textSecondary,
-                }}
-              >
-                {order.status}
-              </Text>
+            <View key={order.id} style={styles.orderCardContainer}>
+              <OrderCard order={order} />
             </View>
           ))
         )}
@@ -494,6 +461,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     marginTop: 20,
+  },
+
+  orderCardContainer: {
+    marginHorizontal: 16,
+    marginTop: 12,
   },
 
   orderPlaceholder: {

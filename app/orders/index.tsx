@@ -1,10 +1,10 @@
+import OrderCard from "@/components/orderCard";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -209,77 +209,77 @@ export default function OrdersScreen() {
   );
 }
 
-function OrderCard({ order }: { order: OrderWithCustomer }) {
-  return (
-    <Pressable
-      style={styles.card}
-      onPress={() => {
-        console.log("Selected order:", order.id);
-      }}
-    >
-      <Image
-        source={require("@/assets/images/dp.png")}
-        style={styles.customerImage}
-      />
+// function OrderCard({ order }: { order: OrderWithCustomer }) {
+//   return (
+//     <Pressable
+//       style={styles.card}
+//       onPress={() => {
+//         console.log("Selected order:", order.id);
+//       }}
+//     >
+//       <Image
+//         source={require("@/assets/images/dp.png")}
+//         style={styles.customerImage}
+//       />
 
-      <View style={styles.customerInfo}>
-        <Text style={styles.customerName} numberOfLines={1}>
-          {order.customerName}
-        </Text>
+//       <View style={styles.customerInfo}>
+//         <Text style={styles.customerName} numberOfLines={1}>
+//           {order.customerName}
+//         </Text>
 
-        <Text style={styles.customerId}>Order: {order.order_code}</Text>
+//         <Text style={styles.customerId}>Order: {order.order_code}</Text>
 
-        <Text style={styles.orderDate}>
-          {new Date(order.created_at).toLocaleDateString("en-GB")}
-        </Text>
-      </View>
+//         <Text style={styles.orderDate}>
+//           {new Date(order.created_at).toLocaleDateString("en-GB")}
+//         </Text>
+//       </View>
 
-      <View style={styles.rightSection}>
-        <StatusBadge status={order.status} />
+//       <View style={styles.rightSection}>
+//         <StatusBadge status={order.status} />
 
-        <Text style={styles.amount}>Rs. {order.amount.toLocaleString()}</Text>
-      </View>
-    </Pressable>
-  );
-}
+//         <Text style={styles.amount}>Rs. {order.amount.toLocaleString()}</Text>
+//       </View>
+//     </Pressable>
+//   );
+// }
 
-function StatusBadge({ status }: { status: OrderStatus }) {
-  return (
-    <View
-      style={[
-        styles.statusBadge,
+// function StatusBadge({ status }: { status: OrderStatus }) {
+//   return (
+//     <View
+//       style={[
+//         styles.statusBadge,
 
-        status === "New" && styles.newStatus,
+//         status === "New" && styles.newStatus,
 
-        status === "Pending" && styles.pendingStatus,
+//         status === "Pending" && styles.pendingStatus,
 
-        status === "Ready" && styles.readyStatus,
+//         status === "Ready" && styles.readyStatus,
 
-        status === "Delivered" && styles.deliveredStatus,
+//         status === "Delivered" && styles.deliveredStatus,
 
-        status === "Cancelled" && styles.cancelledStatus,
-      ]}
-    >
-      <Text
-        style={[
-          styles.statusText,
+//         status === "Cancelled" && styles.cancelledStatus,
+//       ]}
+//     >
+//       <Text
+//         style={[
+//           styles.statusText,
 
-          status === "New" && styles.newText,
+//           status === "New" && styles.newText,
 
-          status === "Pending" && styles.pendingText,
+//           status === "Pending" && styles.pendingText,
 
-          status === "Ready" && styles.readyText,
+//           status === "Ready" && styles.readyText,
 
-          status === "Delivered" && styles.deliveredText,
+//           status === "Delivered" && styles.deliveredText,
 
-          status === "Cancelled" && styles.cancelledText,
-        ]}
-      >
-        {status}
-      </Text>
-    </View>
-  );
-}
+//           status === "Cancelled" && styles.cancelledText,
+//         ]}
+//       >
+//         {status}
+//       </Text>
+//     </View>
+//   );
+// }
 
 const styles = StyleSheet.create({
   main: { flex: 1 },

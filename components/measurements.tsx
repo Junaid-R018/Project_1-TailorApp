@@ -95,7 +95,6 @@ export default function Measurements({ customer }: MeasurementsProps) {
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
-      {/* ================= CURRENT MEASUREMENT ================= */}
       <Text style={[styles.sectionTitle, { color: colors.text }]}>
         {selectedMeasurement &&
         measurements.length > 0 &&
@@ -201,7 +200,6 @@ export default function Measurements({ customer }: MeasurementsProps) {
           </Text>
         </View>
       )}
-      {/* ================= HISTORY ================= */}
       <Text style={[styles.sectionTitle, { color: colors.text }]}>
         {t("measurementHistory")}
       </Text>

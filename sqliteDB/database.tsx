@@ -50,7 +50,7 @@ export const initDatabase = async () => {
 
       console.log("Address column added successfully");
     } else {
-      console.log("Address column already exists");
+      // console.log("Address column already exists");
     }
   } catch (error) {
     console.error("Failed to migrate customers table:", error);
