@@ -123,7 +123,6 @@ export const initDatabase = async () => {
     { name: "Shalwar Kameez", icon: "shirt-outline" },
     { name: "Trouser", icon: "cut-outline" },
     { name: "Waistcoat", icon: "shirt-outline" },
-    { name: "Kapri", icon: "cut-outline" },
     { name: "Other", icon: "ellipsis-horizontal-outline" },
   ];
 
@@ -139,11 +138,18 @@ export const initDatabase = async () => {
       service.icon,
       new Date().toISOString(),
     );
+    // Remove old service that is no longer used
+    await database.runAsync(`DELETE FROM services WHERE name = ?`, "Kapri");
   }
 
   console.log("SQLite database initialized");
 };
 
+export const deleteService = async (id: number) => {
+  const db = await getDatabase();
+
+  await db.runAsync(`DELETE FROM services WHERE id = ?`, [id]);
+};
 // export const resetDatabase = async () => {
 //   const database = await getDatabase();
 

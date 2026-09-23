@@ -454,12 +454,10 @@ export const translations = {
     chest: "چھاتی",
     waist: "کمر",
     hip: "کولہا",
-    sleeve: "آستین",
+    sleeves: "آستین",
     armhole: "بازو کا گھیر",
     cuff: "کف",
     neck: "گردن",
-
-    sleeves: "آستین",
     width: "چوڑائی",
     shirtLength: "قمیض کی لمبائی",
     bicep: "بازو",

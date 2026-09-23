@@ -128,7 +128,7 @@ export default function SettingsScreen() {
         style={[
           styles.sectionTitle,
           {
-            color: colors.textSecondary,
+            color: colors.text,
           },
         ]}
       >
@@ -176,7 +176,7 @@ export default function SettingsScreen() {
         style={[
           styles.sectionTitle,
           {
-            color: colors.textSecondary,
+            color: colors.text,
           },
         ]}
       >
@@ -209,7 +209,7 @@ export default function SettingsScreen() {
         style={[
           styles.sectionTitle,
           {
-            color: colors.textSecondary,
+            color: colors.text,
           },
         ]}
       >
@@ -235,7 +235,7 @@ export default function SettingsScreen() {
         style={[
           styles.sectionTitle,
           {
-            color: colors.textSecondary,
+            color: colors.text,
           },
         ]}
       >

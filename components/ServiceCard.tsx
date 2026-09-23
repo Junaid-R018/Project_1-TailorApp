@@ -3,48 +3,83 @@ import { Service } from "@/sqliteDB/services";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 type Props = {
   service: Service;
+  orderCount?: number;
+  onPress?: () => void;
 };
 
-const ServiceCard = ({ service }: Props) => {
+const ServiceCard = ({ service, orderCount = 0, onPress }: Props) => {
   const { colors } = useTheme();
 
   return (
-    <View
-      style={[
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
         styles.card,
         {
           backgroundColor: colors.card,
         },
+        pressed && {
+          opacity: 0.8,
+          transform: [{ scale: 0.97 }],
+        },
       ]}
     >
+      {/* Icon */}
       <View
         style={[
-          styles.container,
+          styles.iconContainer,
           {
             backgroundColor: colors.secondaryLight,
           },
         ]}
       >
-        <Ionicons name={service.icon as any} size={36} color={colors.primary} />
+        <Ionicons
+          name={(service.icon || "shirt-outline") as any}
+          size={30}
+          color={colors.primary}
+        />
       </View>
 
+      {/* Service information */}
       <View style={styles.content}>
+        {/* Name + Arrow */}
+        <View style={styles.nameRow}>
+          <Text
+            style={[
+              styles.serviceName,
+              {
+                color: colors.text,
+              },
+            ]}
+            numberOfLines={1}
+          >
+            {service.name}
+          </Text>
+
+          <Ionicons
+            name="chevron-forward"
+            size={17}
+            color={colors.textSecondary}
+          />
+        </View>
+
+        {/* Order count */}
         <Text
           style={[
-            styles.itemName,
+            styles.orderCount,
             {
-              color: colors.text,
+              color: colors.textSecondary,
             },
           ]}
         >
-          {service.name}
+          {orderCount} {orderCount === 1 ? "order" : "orders"}
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 };
 
@@ -52,41 +87,50 @@ export default ServiceCard;
 
 const styles = StyleSheet.create({
   card: {
-    width: 180,
-    height: 114,
-    marginTop: 10,
-    marginHorizontal: 8,
-    flexDirection: "row",
-    alignItems: "center",
+    width: 170,
+    minHeight: 118,
+    marginRight: 12,
     borderRadius: theme.radius.large,
-    padding: 15,
+    padding: 14,
+
     elevation: 3,
 
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 3,
     },
   },
 
-  container: {
-    width: 65,
-    height: 65,
-    borderRadius: theme.radius.large,
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
   },
 
   content: {
-    flex: 1,
-    justifyContent: "center",
+    marginTop: 10,
   },
 
-  itemName: {
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  serviceName: {
+    flex: 1,
     fontSize: 16,
     fontWeight: "700",
+    marginRight: 6,
+  },
+
+  orderCount: {
+    fontSize: 12,
+    marginTop: 3,
   },
 });

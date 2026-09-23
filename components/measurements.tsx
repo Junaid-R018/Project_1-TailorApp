@@ -16,26 +16,35 @@ import {
   Text,
   View,
 } from "react-native";
+
 interface MeasurementsProps {
   customer: Customer;
 }
+
 type MeasurementSection = Record<string, string>;
 type ParsedMeasurements = Record<string, MeasurementSection>;
+
 export default function Measurements({ customer }: MeasurementsProps) {
   const { colors } = useTheme();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+
+  const isUrdu = language === "ur";
+
   const [measurements, setMeasurements] = useState<MeasurementRecord[]>([]);
   const [selectedMeasurement, setSelectedMeasurement] =
     useState<MeasurementRecord | null>(null);
   const [loading, setLoading] = useState(true);
+
   useFocusEffect(
     useCallback(() => {
       const loadMeasurements = async () => {
         try {
           setLoading(true);
+
           const data = await getCustomerMeasurements(customer.id);
-          // console.log("Customer Measurements:", data);
+
           setMeasurements(data);
+
           if (data.length > 0) {
             setSelectedMeasurement(data[0]);
           } else {
@@ -47,30 +56,122 @@ export default function Measurements({ customer }: MeasurementsProps) {
           setLoading(false);
         }
       };
+
       loadMeasurements();
     }, [customer.id]),
   );
+
+  // ---------------------------------------------------------
+  // DATE
+  // ---------------------------------------------------------
+
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-GB", {
+    return new Date(date).toLocaleDateString(isUrdu ? "ur-PK" : "en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric",
     });
   };
-  const formatSectionName = (name: string) => {
-    return name
+
+  // ---------------------------------------------------------
+  // MEASUREMENT TRANSLATIONS
+  // ---------------------------------------------------------
+
+  const measurementTranslations: Record<string, string> = {
+    // Sections
+    shirt: "قمیض",
+    pant: "پینٹ",
+    trouser: "ٹراؤزر",
+    shalwar: "شلوار",
+    kameez: "قمیض",
+    shalwarKameez: "شلوار قمیض",
+    waistcoat: "واسکٹ",
+    others: "دیگر",
+
+    // Fields
+    collar: "کالر",
+    ban: "بین",
+    length: "لمبائی",
+    shoulder: "کندھا",
+    chest: "سینہ",
+    waist: "کمر",
+    hip: "کولہا",
+    sleeve: "آستین",
+    sleeveLength: "آستین کی لمبائی",
+    cuff: "کف",
+    armhole: "بازو کا گھیر",
+    neck: "گلا",
+    bottom: "دامن",
+    thigh: "ران",
+    knee: "گھٹنا",
+    ankle: "ٹخنہ",
+    inseam: "اندرونی لمبائی",
+    outseam: "بیرونی لمبائی",
+    pocket: "جیب",
+    pockets: "جیبیں",
+    shalwarLength: "شلوار کی لمبائی",
+    kameezLength: "قمیض کی لمبائی",
+    waistcoatLength: "واسکٹ کی لمبائی",
+  };
+
+  const translateMeasurementText = (name: string) => {
+    if (!isUrdu) {
+      return name
+        .replace(/([A-Z])/g, " $1")
+        .replace(/^./, (char) => char.toUpperCase())
+        .trim();
+    }
+
+    // Exact match first
+    if (measurementTranslations[name]) {
+      return measurementTranslations[name];
+    }
+
+    // Try lowercase
+    const lowerName = name.toLowerCase();
+
+    if (measurementTranslations[lowerName]) {
+      return measurementTranslations[lowerName];
+    }
+
+    // Convert camelCase / normal text
+    const formatted = name
       .replace(/([A-Z])/g, " $1")
       .replace(/^./, (char) => char.toUpperCase())
       .trim();
+
+    return measurementTranslations[formatted.toLowerCase()] || formatted;
   };
-  const formatFieldName = (name: string) => {
-    return name
-      .replace(/([A-Z])/g, " $1")
-      .replace(/^./, (char) => char.toUpperCase())
-      .trim();
+
+  // ---------------------------------------------------------
+  // UNIT TRANSLATION
+  // ---------------------------------------------------------
+
+  const translateUnit = (unit: string) => {
+    if (!isUrdu) {
+      return unit;
+    }
+
+    const normalized = unit.toLowerCase();
+
+    if (normalized === "inch" || normalized === "inches") {
+      return "انچ";
+    }
+
+    if (normalized === "cm" || normalized === "centimeter") {
+      return "سینٹی میٹر";
+    }
+
+    return unit;
   };
+
+  // ---------------------------------------------------------
+  // PARSE MEASUREMENTS
+  // ---------------------------------------------------------
+
   const parsedMeasurements = useMemo<ParsedMeasurements | null>(() => {
     if (!selectedMeasurement) return null;
+
     try {
       return JSON.parse(selectedMeasurement.measurements);
     } catch (error) {
@@ -78,8 +179,14 @@ export default function Measurements({ customer }: MeasurementsProps) {
       return null;
     }
   }, [selectedMeasurement]);
+
+  // ---------------------------------------------------------
+  // ONLY SHOW SECTIONS THAT HAVE VALUES
+  // ---------------------------------------------------------
+
   const filledSections = useMemo(() => {
     if (!parsedMeasurements) return [];
+
     return Object.entries(parsedMeasurements).filter(
       ([, section]) =>
         section &&
@@ -89,30 +196,71 @@ export default function Measurements({ customer }: MeasurementsProps) {
         ),
     );
   }, [parsedMeasurements]);
+
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>
+      {/* -------------------------------------------------- */}
+      {/* CURRENT MEASUREMENTS TITLE */}
+      {/* -------------------------------------------------- */}
+
+      <Text
+        style={[
+          styles.sectionTitle,
+          {
+            color: colors.text,
+            textAlign: isUrdu ? "right" : "left",
+          },
+        ]}
+      >
         {selectedMeasurement &&
         measurements.length > 0 &&
         selectedMeasurement.id === measurements[0].id
           ? t("currentMeasurements")
           : t("measurementDetails")}
       </Text>
+
+      {/* -------------------------------------------------- */}
+      {/* LOADING */}
+      {/* -------------------------------------------------- */}
+
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator color={colors.primary} />
-          <Text style={[styles.message, { color: colors.textSecondary }]}>
+
+          <Text
+            style={[
+              styles.message,
+              {
+                color: colors.textSecondary,
+                textAlign: isUrdu ? "right" : "left",
+              },
+            ]}
+          >
             {t("loadingMeasurements")}
           </Text>
         </View>
       ) : selectedMeasurement && parsedMeasurements ? (
         <>
+          {/* -------------------------------------------------- */}
+          {/* MEASUREMENT CARD */}
+          {/* -------------------------------------------------- */}
+
           <View
-            style={[styles.measurementCard, { backgroundColor: colors.card }]}
+            style={[
+              styles.measurementCard,
+              {
+                backgroundColor: colors.card,
+              },
+            ]}
           >
             <ScrollView
               nestedScrollEnabled
@@ -121,18 +269,31 @@ export default function Measurements({ customer }: MeasurementsProps) {
             >
               {filledSections.length > 0 ? (
                 filledSections.map(([sectionName, section]) => (
-                  <View key={sectionName} style={styles.measurementSection}>
+                  <View
+                    key={sectionName}
+                    style={[
+                      styles.measurementSection,
+                      {
+                        direction: isUrdu ? "rtl" : "ltr",
+                      } as any,
+                    ]}
+                  >
+                    {/* Section name */}
                     <Text
                       style={[
                         styles.measurementSectionTitle,
                         {
                           color: colors.secondaryLight,
                           borderBottomColor: colors.primary,
+                          textAlign: isUrdu ? "right" : "left",
+                          writingDirection: isUrdu ? "rtl" : "ltr",
                         },
                       ]}
                     >
-                      {formatSectionName(sectionName)}
+                      {translateMeasurementText(sectionName)}
                     </Text>
+
+                    {/* Fields */}
                     {Object.entries(section).map(([fieldName, value]) => {
                       if (
                         value === undefined ||
@@ -141,24 +302,48 @@ export default function Measurements({ customer }: MeasurementsProps) {
                       ) {
                         return null;
                       }
+
+                      const translatedUnit = translateUnit(
+                        selectedMeasurement.unit,
+                      );
+
                       return (
                         <View
                           key={fieldName}
                           style={[
                             styles.row,
-                            { borderBottomColor: colors.border },
+                            {
+                              borderBottomColor: colors.border,
+                              flexDirection: isUrdu ? "row-reverse" : "row",
+                            },
                           ]}
                         >
+                          {/* Label */}
                           <Text
                             style={[
                               styles.label,
-                              { color: colors.textSecondary },
+                              {
+                                color: colors.textSecondary,
+                                textAlign: isUrdu ? "right" : "left",
+                                writingDirection: isUrdu ? "rtl" : "ltr",
+                              },
                             ]}
                           >
-                            {formatFieldName(fieldName)}
+                            {translateMeasurementText(fieldName)}
                           </Text>
-                          <Text style={[styles.value, { color: colors.text }]}>
-                            {value} {selectedMeasurement.unit}
+
+                          {/* Value */}
+                          <Text
+                            style={[
+                              styles.value,
+                              {
+                                color: colors.text,
+                                textAlign: isUrdu ? "left" : "right",
+                                writingDirection: isUrdu ? "rtl" : "ltr",
+                              },
+                            ]}
+                          >
+                            {value} {translatedUnit}
                           </Text>
                         </View>
                       );
@@ -167,16 +352,43 @@ export default function Measurements({ customer }: MeasurementsProps) {
                 ))
               ) : (
                 <Text
-                  style={[styles.emptyText, { color: colors.textSecondary }]}
+                  style={[
+                    styles.emptyText,
+                    {
+                      color: colors.textSecondary,
+                      textAlign: isUrdu ? "right" : "left",
+                    },
+                  ]}
                 >
                   {t("noMeasurementDetails")}
                 </Text>
               )}
             </ScrollView>
           </View>
+
+          {/* -------------------------------------------------- */}
+          {/* NOTES */}
+          {/* -------------------------------------------------- */}
+
           {selectedMeasurement.notes ? (
-            <View style={[styles.notesCard, { backgroundColor: colors.card }]}>
-              <Text style={[styles.notesTitle, { color: colors.text }]}>
+            <View
+              style={[
+                styles.notesCard,
+                {
+                  backgroundColor: colors.card,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.notesTitle,
+                  {
+                    color: colors.text,
+                    textAlign: isUrdu ? "right" : "left",
+                    writingDirection: isUrdu ? "rtl" : "ltr",
+                  },
+                ]}
+              >
                 {t("notes")}
               </Text>
 
@@ -185,6 +397,8 @@ export default function Measurements({ customer }: MeasurementsProps) {
                   styles.notesText,
                   {
                     color: colors.textSecondary,
+                    textAlign: isUrdu ? "right" : "left",
+                    writingDirection: isUrdu ? "rtl" : "ltr",
                   },
                 ]}
               >
@@ -194,55 +408,166 @@ export default function Measurements({ customer }: MeasurementsProps) {
           ) : null}
         </>
       ) : (
-        <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+        <View
+          style={[
+            styles.emptyCard,
+            {
+              backgroundColor: colors.card,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.emptyText,
+              {
+                color: colors.textSecondary,
+                textAlign: isUrdu ? "right" : "left",
+              },
+            ]}
+          >
             {t("noMeasurements")}
           </Text>
         </View>
       )}
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>
+
+      {/* -------------------------------------------------- */}
+      {/* MEASUREMENT HISTORY */}
+      {/* -------------------------------------------------- */}
+
+      <Text
+        style={[
+          styles.sectionTitle,
+          {
+            color: colors.text,
+            textAlign: isUrdu ? "right" : "left",
+          },
+        ]}
+      >
         {t("measurementHistory")}
       </Text>
+
       {!loading && measurements.length === 0 ? (
-        <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+        <View
+          style={[
+            styles.emptyCard,
+            {
+              backgroundColor: colors.card,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.emptyText,
+              {
+                color: colors.textSecondary,
+                textAlign: isUrdu ? "right" : "left",
+              },
+            ]}
+          >
             {t("noMeasurementHistory")}
           </Text>
         </View>
       ) : (
         measurements.map((measurement, index) => {
           const isSelected = selectedMeasurement?.id === measurement.id;
+
           return (
             <Pressable
               key={measurement.id}
               onPress={() => setSelectedMeasurement(measurement)}
               style={({ pressed }) => [
                 styles.historyCard,
-                { backgroundColor: colors.card },
-                isSelected && { borderColor: colors.primary },
+                {
+                  backgroundColor: colors.card,
+                  flexDirection: isUrdu ? "row-reverse" : "row",
+                },
+                isSelected && {
+                  borderColor: colors.primary,
+                },
                 pressed && styles.historyPressed,
               ]}
             >
-              <View style={styles.historyLeft}>
-                <Text style={[styles.date, { color: colors.text }]}>
+              {/* History left */}
+              <View
+                style={[
+                  styles.historyLeft,
+                  {
+                    alignItems: isUrdu ? "flex-end" : "flex-start",
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.date,
+                    {
+                      color: colors.text,
+                      textAlign: isUrdu ? "right" : "left",
+                    },
+                  ]}
+                >
                   {formatDate(measurement.created_at)}
                 </Text>
+
                 <Text
-                  style={[styles.historyType, { color: colors.textSecondary }]}
+                  style={[
+                    styles.historyType,
+                    {
+                      color: colors.textSecondary,
+                      textAlign: isUrdu ? "right" : "left",
+                    },
+                  ]}
                 >
                   {index === 0
                     ? t("currentMeasurement")
                     : t("previousMeasurement")}
                 </Text>
-                <Text style={[styles.unit, { color: colors.textSecondary }]}>
-                  {t("unit")}: {measurement.unit}
+
+                <Text
+                  style={[
+                    styles.unit,
+                    {
+                      color: colors.textSecondary,
+                      textAlign: isUrdu ? "right" : "left",
+                    },
+                  ]}
+                >
+                  {t("unit")}: {translateUnit(measurement.unit)}
                 </Text>
               </View>
-              <View style={styles.historyRight}>
-                <Text style={[styles.viewText, { color: colors.primaryDark }]}>
+
+              {/* View button */}
+              <View
+                style={[
+                  styles.historyRight,
+                  {
+                    flexDirection: isUrdu ? "row-reverse" : "row",
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.viewText,
+                    {
+                      color: colors.primaryDark,
+                    },
+                  ]}
+                >
                   {t("view")}
                 </Text>
-                <Text style={[styles.arrow, { color: colors.secondaryLight }]}>
+
+                <Text
+                  style={[
+                    styles.arrow,
+                    {
+                      color: colors.secondaryLight,
+                      transform: [
+                        {
+                          rotate: isUrdu ? "180deg" : "0deg",
+                        },
+                      ],
+                    },
+                  ]}
+                >
                   ›
                 </Text>
               </View>
@@ -253,33 +578,56 @@ export default function Measurements({ customer }: MeasurementsProps) {
     </ScrollView>
   );
 }
+
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  contentContainer: { padding: 16, paddingBottom: 30 },
+  container: {
+    flex: 1,
+  },
+
+  contentContainer: {
+    padding: 16,
+    paddingBottom: 30,
+  },
+
   sectionTitle: {
     fontSize: theme.font.size.large,
     fontWeight: "600",
     marginBottom: 14,
   },
+
   loadingContainer: {
     paddingVertical: 25,
     alignItems: "center",
     justifyContent: "center",
   },
-  message: { marginTop: 8 },
+
+  message: {
+    marginTop: 8,
+  },
+
   measurementCard: {
     borderRadius: theme.radius.medium,
     marginBottom: 16,
     elevation: 5,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     maxHeight: 330,
     overflow: "hidden",
   },
-  measurementContent: { padding: 16 },
-  measurementSection: { marginBottom: 18 },
+
+  measurementContent: {
+    padding: 16,
+  },
+
+  measurementSection: {
+    marginBottom: 18,
+  },
+
   measurementSectionTitle: {
     fontSize: 17,
     fontWeight: "700",
@@ -287,50 +635,105 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     paddingBottom: 6,
   },
+
   row: {
-    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 8,
     borderBottomWidth: 1,
   },
-  label: { flex: 1, fontSize: 14 },
-  value: { fontSize: 15, fontWeight: "600" },
+
+  label: {
+    flex: 1,
+    fontSize: 14,
+  },
+
+  value: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+
   notesCard: {
     borderRadius: theme.radius.medium,
     padding: 16,
     marginBottom: 24,
     elevation: 3,
   },
-  notesTitle: { fontSize: 16, fontWeight: "700", marginBottom: 6 },
-  notesText: { fontSize: 14, lineHeight: 21 },
+
+  notesTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 6,
+  },
+
+  notesText: {
+    fontSize: 14,
+    lineHeight: 21,
+  },
+
   emptyCard: {
     padding: 20,
     borderRadius: theme.radius.medium,
     marginBottom: 24,
     alignItems: "center",
   },
-  emptyText: { fontSize: 15 },
+
+  emptyText: {
+    fontSize: 15,
+  },
+
   historyCard: {
     padding: 14,
     borderRadius: theme.radius.medium,
     marginBottom: 10,
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     elevation: 3,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.15,
     shadowRadius: 3,
     borderWidth: 0,
   },
-  historyPressed: { opacity: 0.7 },
-  historyLeft: { flex: 1 },
-  date: { fontSize: 15, fontWeight: "600" },
-  historyType: { fontSize: theme.font.size.small, marginTop: 4 },
-  unit: { fontSize: 13, marginTop: 5 },
-  historyRight: { flexDirection: "row", alignItems: "center", marginLeft: 10 },
-  viewText: { fontSize: 13, fontWeight: "600" },
-  arrow: { fontSize: 28, marginLeft: 4 },
+
+  historyPressed: {
+    opacity: 0.7,
+  },
+
+  historyLeft: {
+    flex: 1,
+  },
+
+  date: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+
+  historyType: {
+    fontSize: theme.font.size.small,
+    marginTop: 4,
+  },
+
+  unit: {
+    fontSize: 13,
+    marginTop: 5,
+  },
+
+  historyRight: {
+    alignItems: "center",
+    marginLeft: 10,
+  },
+
+  viewText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+
+  arrow: {
+    fontSize: 28,
+    marginLeft: 4,
+  },
 });

@@ -1,233 +1,276 @@
-// import { useTheme } from "@/app/context/ThemeContext";
-// import { Order } from "@/sqliteDB/order";
-// import { theme } from "@/styles/theme";
-// import { StyleSheet, Text, View } from "react-native";
-
-// interface OrderCardProps {
-//   order: Order;
-// }
-
-// export default function OrderCard({ order }: OrderCardProps) {
-//   const { colors } = useTheme();
-
-//   return (
-//     <View
-//       style={[
-//         styles.card,
-//         {
-//           backgroundColor: colors.card,
-//           borderColor: colors.border,
-//         },
-//       ]}
-//     >
-//       <View style={styles.topRow}>
-//         <Text
-//           style={[
-//             styles.orderNumber,
-//             {
-//               color: colors.text,
-//             },
-//           ]}
-//         >
-//           {order.order_code}
-//         </Text>
-
-//         <View
-//           style={[
-//             styles.statusBadge,
-//             {
-//               backgroundColor: colors.primary,
-//             },
-//           ]}
-//         >
-//           <Text
-//             style={[
-//               styles.status,
-//               {
-//                 color: colors.secondaryDark,
-//               },
-//             ]}
-//           >
-//             {order.status}
-//           </Text>
-//         </View>
-//       </View>
-//       <Text
-//         style={[
-//           styles.date,
-//           {
-//             color: colors.textSecondary,
-//           },
-//         ]}
-//       >
-//         {order.delivery_date
-//           ? new Date(order.delivery_date).toLocaleDateString("en-US", {
-//               day: "numeric",
-//               month: "short",
-//               year: "numeric",
-//             })
-//           : "No delivery date"}
-//       </Text>
-//       <View style={styles.bottomRow}>
-//         {/* <Text
-//           style={[
-//             styles.item,
-//             {
-//               color: colors.textSecondary,
-//             },
-//           ]}
-//         >
-//           Tailoring Order
-//         </Text> */}
-
-//         <Text
-//           style={[
-//             styles.total,
-//             {
-//               color: colors.text,
-//             },
-//           ]}
-//         >
-//           Rs. {order.amount ?? 0}
-//         </Text>
-//       </View>
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   card: {
-//     padding: 14,
-//     borderRadius: theme.radius.medium,
-//     marginBottom: 10,
-//     borderWidth: 1,
-//     marginTop: 10,
-//     marginHorizontal: 12,
-//     elevation: 3,
-//     shadowColor: "#000",
-//     shadowOffset: {
-//       width: 0,
-//       height: 2,
-//     },
-//     shadowOpacity: 0.15,
-//     shadowRadius: 3,
-//   },
-
-//   topRow: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     alignItems: "center",
-//   },
-
-//   orderNumber: {
-//     fontSize: theme.font.size.medium,
-//     fontWeight: "600",
-//   },
-
-//   statusBadge: {
-//     paddingHorizontal: 10,
-//     paddingVertical: 5,
-//     borderRadius: theme.radius.round,
-//   },
-
-//   status: {
-//     fontSize: theme.font.size.small,
-//     fontWeight: "600",
-//   },
-
-//   date: {
-//     marginTop: 6,
-//     fontSize: theme.font.size.small,
-//   },
-
-//   bottomRow: {
-//     marginTop: 14,
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     alignItems: "center",
-//   },
-
-//   item: {
-//     fontSize: theme.font.size.small,
-//   },
-
-//   total: {
-//     fontSize: theme.font.size.medium,
-//     fontWeight: "700",
-//   },
-// });
-
+import { useTheme } from "@/app/context/ThemeContext";
+import {
+  OrderStatus,
+  OrderWithCustomer,
+  updateOrderStatus,
+} from "@/sqliteDB/order";
 import { theme } from "@/styles/theme";
-import React from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-
-import { OrderStatus, OrderWithCustomer } from "@/sqliteDB/order";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import React, { useState } from "react";
+import { Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
 interface OrderCardProps {
   order: OrderWithCustomer;
 }
 
+const statuses: OrderStatus[] = [
+  "New",
+  "Pending",
+  "Ready",
+  "Delivered",
+  "Cancelled",
+];
+
 export default function OrderCard({ order }: OrderCardProps) {
+  const { colors } = useTheme();
+
+  const [statusModalVisible, setStatusModalVisible] = useState(false);
+  const [updating, setUpdating] = useState(false);
+
+  const formatDate = (date: string | null) => {
+    if (!date) return "Not set";
+
+    return new Date(date).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const handleStatusChange = async (status: OrderStatus) => {
+    if (status === order.status) {
+      setStatusModalVisible(false);
+      return;
+    }
+
+    try {
+      setUpdating(true);
+
+      await updateOrderStatus(order.id, status);
+
+      setStatusModalVisible(false);
+
+      console.log(`Order ${order.order_code} status changed to ${status}`);
+
+      // Important:
+      // The Orders screen should reload its orders after this.
+    } catch (error) {
+      console.error("Failed to update order status:", error);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   return (
-    <Pressable
-      style={styles.card}
-      onPress={() => {
-        console.log("Selected order:", order.id);
+    <>
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        {/* CUSTOMER IMAGE */}
+        <Image
+          source={require("@/assets/images/profile.png")}
+          style={styles.customerImage}
+        />
 
-        // Later you can navigate to order details:
-        // router.push(`/orders/${order.id}`);
-      }}
-    >
-      <Image
-        source={require("@/assets/images/dp.png")}
-        style={styles.customerImage}
-      />
+        {/* CUSTOMER INFO */}
+        <View style={styles.customerInfo}>
+          <Text
+            style={[styles.customerName, { color: colors.textNavy }]}
+            numberOfLines={1}
+          >
+            {order.customerName || "Unknown Customer"}
+          </Text>
 
-      <View style={styles.customerInfo}>
-        <Text style={styles.customerName} numberOfLines={1}>
-          {order.customerName}
-        </Text>
+          <Text style={[styles.customerId, { color: colors.textSecondary }]}>
+            Order: {order.order_code}
+          </Text>
 
-        <Text style={styles.customerId}>Order: {order.order_code}</Text>
+          {/* CREATED DATE */}
+          <View style={styles.dateRow}>
+            <Ionicons
+              name="calendar-outline"
+              size={14}
+              color={colors.textSecondary}
+            />
 
-        <Text style={styles.orderDate}>
-          {new Date(order.created_at).toLocaleDateString("en-GB")}
-        </Text>
+            <Text style={[styles.orderDate, { color: colors.textSecondary }]}>
+              Created: {formatDate(order.created_at)}
+            </Text>
+          </View>
+
+          {/* DELIVERY DATE */}
+          <View style={styles.dateRow}>
+            <Ionicons
+              name="time-outline"
+              size={14}
+              color={colors.textSecondary}
+            />
+
+            <Text
+              style={[styles.deliveryDate, { color: colors.textSecondary }]}
+            >
+              Delivery: {formatDate(order.delivery_date)}
+            </Text>
+          </View>
+        </View>
+
+        {/* RIGHT SECTION */}
+        <View style={styles.rightSection}>
+          {/* STATUS BUTTON */}
+          <Pressable
+            disabled={updating}
+            onPress={() => setStatusModalVisible(true)}
+          >
+            <StatusBadge status={order.status} />
+
+            <View style={styles.changeStatusRow}>
+              <Text
+                style={[styles.changeStatusText, { color: colors.primary }]}
+              >
+                Change
+              </Text>
+
+              <Ionicons name="chevron-down" size={13} color={colors.primary} />
+            </View>
+          </Pressable>
+
+          {/* AMOUNT */}
+          <Text style={[styles.amount, { color: colors.text }]}>
+            Rs. {(order.amount ?? 0).toLocaleString()}
+          </Text>
+        </View>
       </View>
 
-      <View style={styles.rightSection}>
-        <StatusBadge status={order.status} />
+      {/* STATUS MODAL */}
+      <Modal
+        visible={statusModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setStatusModalVisible(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setStatusModalVisible(false)}
+        >
+          <Pressable
+            style={[
+              styles.bottomSheet,
+              {
+                backgroundColor: colors.backgroundLight,
+              },
+            ]}
+            onPress={(event) => event.stopPropagation()}
+          >
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              Change Order Status
+            </Text>
 
-        <Text style={styles.amount}>Rs. {order.amount.toLocaleString()}</Text>
-      </View>
-    </Pressable>
+            <Text style={[styles.modalOrder, { color: colors.textSecondary }]}>
+              {order.order_code}
+            </Text>
+
+            {statuses.map((status) => {
+              const selected = status === order.status;
+
+              return (
+                <Pressable
+                  key={status}
+                  disabled={updating}
+                  onPress={() => handleStatusChange(status)}
+                  style={[
+                    styles.statusOption,
+                    {
+                      borderColor: colors.border,
+                    },
+                    selected && {
+                      borderColor: colors.primary,
+                      backgroundColor: colors.background,
+                    },
+                  ]}
+                >
+                  <StatusBadge status={status} />
+
+                  <View style={styles.radioContainer}>
+                    <View
+                      style={[
+                        styles.radioOuter,
+                        {
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
+                      {selected && (
+                        <View
+                          style={[
+                            styles.radioInner,
+                            {
+                              backgroundColor: colors.primary,
+                            },
+                          ]}
+                        />
+                      )}
+                    </View>
+                  </View>
+                </Pressable>
+              );
+            })}
+
+            <Pressable
+              style={[
+                styles.cancelButton,
+                {
+                  borderColor: colors.border,
+                },
+              ]}
+              onPress={() => setStatusModalVisible(false)}
+            >
+              <Text style={[styles.cancelText, { color: colors.text }]}>
+                Cancel
+              </Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
 function StatusBadge({ status }: { status: OrderStatus }) {
+  const { colors } = useTheme();
+
   return (
     <View
       style={[
         styles.statusBadge,
 
-        status === "New" && styles.newStatus,
-        status === "Pending" && styles.pendingStatus,
-        status === "Ready" && styles.readyStatus,
-        status === "Delivered" && styles.deliveredStatus,
-        status === "Cancelled" && styles.cancelledStatus,
+        status === "New" && {
+          backgroundColor: colors.primary,
+        },
+
+        status === "Pending" && {
+          backgroundColor: "#dd7119",
+        },
+
+        status === "Ready" && {
+          backgroundColor: colors.success,
+        },
+
+        status === "Delivered" && {
+          backgroundColor: colors.secondaryLight,
+        },
+
+        status === "Cancelled" && {
+          backgroundColor: colors.error,
+        },
       ]}
     >
-      <Text
-        style={[
-          styles.statusText,
-
-          status === "New" && styles.newText,
-          status === "Pending" && styles.pendingText,
-          status === "Ready" && styles.readyText,
-          status === "Delivered" && styles.deliveredText,
-          status === "Cancelled" && styles.cancelledText,
-        ]}
-      >
+      <Text style={[styles.statusText, { color: colors.textWhite }]}>
         {status}
       </Text>
     </View>
@@ -236,48 +279,59 @@ function StatusBadge({ status }: { status: OrderStatus }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: theme.colors.light.textWhite,
     borderRadius: theme.radius.large,
-    borderColor: theme.colors.light.border,
+    borderWidth: 1,
     padding: 12,
     flexDirection: "row",
     alignItems: "center",
     elevation: 5,
+    marginBottom: 10,
   },
 
   customerImage: {
-    width: 58,
-    height: 58,
-    borderRadius: theme.radius.round,
+    width: 70,
+    height: 74,
+    borderRadius: theme.radius.medium,
     backgroundColor: "#E8E8E8",
   },
 
   customerInfo: {
     flex: 1,
     marginLeft: 12,
+    minWidth: 0,
   },
 
   customerName: {
     fontSize: 16,
     fontWeight: "700",
-    color: theme.colors.light.textNavy,
     marginBottom: 3,
   },
 
   customerId: {
     fontSize: 12,
-    color: theme.colors.light.textSecondary,
     marginBottom: 4,
   },
 
+  dateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 2,
+  },
+
   orderDate: {
-    fontSize: 12,
-    color: theme.colors.light.textSecondary,
+    fontSize: 11,
+  },
+
+  deliveryDate: {
+    fontSize: 11,
+    fontWeight: "600",
   },
 
   rightSection: {
     alignItems: "flex-end",
     justifyContent: "space-between",
+    marginLeft: 8,
   },
 
   statusBadge: {
@@ -291,50 +345,92 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  newStatus: {
-    backgroundColor: theme.colors.light.primary,
+  changeStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 3,
   },
 
-  newText: {
-    color: theme.colors.light.textWhite,
-  },
-
-  pendingStatus: {
-    backgroundColor: "#dd7119",
-  },
-
-  pendingText: {
-    color: theme.colors.light.textWhite,
-  },
-
-  readyStatus: {
-    backgroundColor: theme.colors.light.success,
-  },
-
-  readyText: {
-    color: theme.colors.light.textWhite,
-  },
-
-  deliveredStatus: {
-    backgroundColor: theme.colors.light.secondaryLight,
-  },
-
-  deliveredText: {
-    color: theme.colors.light.textWhite,
-  },
-
-  cancelledStatus: {
-    backgroundColor: theme.colors.light.error,
-  },
-
-  cancelledText: {
-    color: theme.colors.light.textWhite,
+  changeStatusText: {
+    fontSize: 9,
+    fontWeight: "600",
   },
 
   amount: {
     marginTop: 10,
     fontSize: 13,
     fontWeight: "700",
-    color: theme.colors.light.text,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+
+  bottomSheet: {
+    padding: 20,
+    paddingBottom: 30,
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+  },
+
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+
+  modalOrder: {
+    fontSize: 13,
+    textAlign: "center",
+    marginTop: 4,
+    marginBottom: 18,
+  },
+
+  statusOption: {
+    height: 55,
+    borderWidth: 1,
+    borderRadius: 12,
+    marginBottom: 10,
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  radioContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  radioOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+
+  cancelButton: {
+    height: 50,
+    borderWidth: 1,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 5,
+  },
+
+  cancelText: {
+    fontSize: 15,
+    fontWeight: "600",
   },
 });

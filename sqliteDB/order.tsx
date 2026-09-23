@@ -106,7 +106,7 @@ export const getAllOrders = async (): Promise<OrderWithCustomer[]> => {
 
     LEFT JOIN customers
       ON orders.customer_id = customers.id
-    ORDER BY orders.id ASC
+    ORDER BY orders.id DESC
   `);
 
   // console.log("All Orders From DB:", orders);
@@ -114,6 +114,47 @@ export const getAllOrders = async (): Promise<OrderWithCustomer[]> => {
   return orders;
 };
 
+export const searchOrders = async (
+  query: string,
+): Promise<OrderWithCustomer[]> => {
+  const db = await getDatabase();
+
+  const search = `%${query.trim()}%`;
+
+  const result = await db.getAllAsync<OrderWithCustomer>(
+    `
+    SELECT
+      orders.id,
+      orders.order_code,
+      orders.customer_id,
+      orders.service_id,
+      orders.status,
+      orders.amount,
+      orders.delivery_date,
+      orders.created_at,
+
+      customers.first_name AS customerName,
+      customers.phone AS customerPhone
+
+    FROM orders
+
+    LEFT JOIN customers
+      ON orders.customer_id = customers.id
+
+    WHERE
+      customers.first_name LIKE ?
+      OR customers.phone LIKE ?
+      OR orders.order_code LIKE ?
+      OR orders.status LIKE ?
+
+    ORDER BY orders.id DESC
+    LIMIT 10
+    `,
+    [search, search, search, search],
+  );
+
+  return result;
+};
 // Update order status
 export const updateOrderStatus = async (
   orderId: number,

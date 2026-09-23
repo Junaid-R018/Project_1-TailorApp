@@ -51,17 +51,6 @@ export const measurementSections: MeasurementSection[] = [
       { key: "length", label: "length" },
     ],
   },
-
-  {
-    key: "shalwar",
-    title: "shalwar",
-    fields: [
-      { key: "shalwarLength", label: "shalwarLength" },
-      { key: "pancha", label: "pancha" },
-      { key: "bottom", label: "bottom" },
-    ],
-  },
-
   {
     key: "kameez",
     title: "kameez",
@@ -76,6 +65,32 @@ export const measurementSections: MeasurementSection[] = [
       { key: "kameezLength", label: "kameezLength" },
       { key: "armhole", label: "armhole" },
       { key: "cuff", label: "cuff" },
+    ],
+  },
+  {
+    key: "kurta",
+    title: "kurta",
+    fields: [
+      { key: "ban", label: "ban" },
+      { key: "collar", label: "collar" },
+      { key: "chest", label: "chest" },
+      { key: "width", label: "width" },
+      { key: "shoulder", label: "shoulder" },
+      { key: "bicep", label: "bicep" },
+      { key: "sleeves", label: "sleeves" },
+      { key: "kurtaLength", label: "kurtaLength" },
+      { key: "armhole", label: "armhole" },
+      { key: "cuff", label: "cuff" },
+    ],
+  },
+
+  {
+    key: "shalwar",
+    title: "shalwar",
+    fields: [
+      { key: "shalwarLength", label: "shalwarLength" },
+      { key: "pancha", label: "pancha" },
+      { key: "bottom", label: "bottom" },
     ],
   },
 

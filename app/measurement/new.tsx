@@ -5,8 +5,10 @@ import { useTheme } from "@/app/context/ThemeContext";
 import MainButton from "@/components/MainButton ";
 import InputField from "@/components/inputField";
 import {
+  MeasurementRecord,
   addMeasurement,
   getCustomerMeasurements,
+  getLatestMeasurement,
   updateMeasurement,
 } from "@/sqliteDB/measurement";
 import { theme } from "@/styles/theme";
@@ -59,33 +61,49 @@ const MeasurementsScreen = () => {
   const [openSection, setOpenSection] = useState("shirt");
   const [measurements, setMeasurements] =
     useState<Measurements>(emptyMeasurements);
+  const [editingMeasurementId, setEditingMeasurementId] = useState<
+    number | null
+  >(measurementId);
   const [others, setOthers] = useState("");
 
   useEffect(() => {
     const loadMeasurement = async () => {
       try {
-        const records = await getCustomerMeasurements(customerId);
-
-        const record = records.find((item) => item.id === measurementId);
-
-        if (!record) {
-          console.log("Measurement not found");
+        if (!customerId || mode !== "edit") {
           return;
         }
+
+        let record: MeasurementRecord | null = null;
+
+        // If measurementId was passed, load that specific measurement
+        if (measurementId) {
+          const records = await getCustomerMeasurements(customerId);
+
+          record = records.find((item) => item.id === measurementId) ?? null;
+        } else {
+          // Otherwise load the customer's latest measurement
+          record = await getLatestMeasurement(customerId);
+        }
+
+        if (!record) {
+          console.log("No measurement found for customer:", customerId);
+          return;
+        }
+        setEditingMeasurementId(record.id);
 
         const savedMeasurements = JSON.parse(record.measurements);
 
         setMeasurements(savedMeasurements);
         setUnit(record.unit);
         setOthers(record.notes ?? "");
+
+        // console.log("Loaded measurement:", record);
       } catch (error) {
         console.log("Failed to load measurement:", error);
       }
     };
 
-    if (mode === "edit" && measurementId) {
-      loadMeasurement();
-    }
+    loadMeasurement();
   }, [mode, customerId, measurementId]);
 
   const handleFieldChange = (
@@ -127,8 +145,13 @@ const MeasurementsScreen = () => {
         return;
       }
 
-      if (mode === "edit" && measurementId) {
-        await updateMeasurement(measurementId, measurements, unit, others);
+      if (mode === "edit" && editingMeasurementId) {
+        await updateMeasurement(
+          editingMeasurementId,
+          measurements,
+          unit,
+          others,
+        );
 
         console.log("Measurement updated successfully");
       } else {
@@ -310,9 +333,6 @@ const MeasurementsScreen = () => {
                             unit={unit === "inch" ? "in" : "cm"}
                             isUrdu={isUrdu}
                           />
-                          // <View key={field.key} style={styles.inputContainer}>
-
-                          // </View>
                         );
                       })}
                     </View>

@@ -8,6 +8,7 @@ import {
   updateCustomer,
 } from "@/sqliteDB/customer";
 import { addOrder } from "@/sqliteDB/order";
+import { getServices, Service } from "@/sqliteDB/services";
 
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -31,15 +32,27 @@ const AddCustomer = () => {
 
   const [firstName, setFirstName] = useState("");
   const [firstNameError, setFirstNameError] = useState("");
+
   const [address, setAddress] = useState("");
 
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
 
+  // =========================
+  // SERVICES
+  // =========================
+  const [services, setServices] = useState<Service[]>([]);
+  const [selectedServiceId, setSelectedServiceId] = useState<number | null>(
+    null,
+  );
+  const [serviceError, setServiceError] = useState("");
+
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
+
   const [advanceAmount, setAdvanceAmount] = useState("");
   const [notes, setNotes] = useState("");
+
   const [modalVisible, setModalVisible] = useState(false);
 
   const { customerId, mode } = useLocalSearchParams<{
@@ -49,6 +62,9 @@ const AddCustomer = () => {
 
   const isEditMode = mode === "edit";
 
+  // =========================
+  // LOAD CUSTOMER + SERVICES
+  // =========================
   useEffect(() => {
     const loadCustomer = async () => {
       if (!isEditMode || !customerId) return;
@@ -74,9 +90,26 @@ const AddCustomer = () => {
       }
     };
 
+    const loadServices = async () => {
+      try {
+        const data = await getServices();
+
+        setServices(data);
+
+        // Don't automatically select a service.
+        // User must choose the service when creating a new order.
+      } catch (error) {
+        console.error("Failed to load services:", error);
+      }
+    };
+
     loadCustomer();
+    loadServices();
   }, [isEditMode, customerId]);
 
+  // =========================
+  // DATE
+  // =========================
   const handleDate = (event: any, selectedDate?: Date) => {
     setShowPicker(false);
 
@@ -85,9 +118,13 @@ const AddCustomer = () => {
     }
   };
 
+  // =========================
+  // SAVE CUSTOMER
+  // =========================
   const handleSaveCustomer = async () => {
     let hasError = false;
 
+    // First name validation
     if (!firstName.trim()) {
       setFirstNameError(t("firstNameRequired"));
       hasError = true;
@@ -95,11 +132,20 @@ const AddCustomer = () => {
       setFirstNameError("");
     }
 
+    // Phone validation
     if (!phone.trim()) {
       setPhoneError(t("phoneRequired"));
       hasError = true;
     } else {
       setPhoneError("");
+    }
+
+    // Service is required only for a NEW customer/order
+    if (!isEditMode && !selectedServiceId) {
+      setServiceError("Please select a service");
+      hasError = true;
+    } else {
+      setServiceError("");
     }
 
     if (hasError) {
@@ -143,9 +189,21 @@ const AddCustomer = () => {
 
       const orderCode = `ORD-${String(newCustomerId).padStart(3, "0")}`;
 
-      await addOrder(orderCode, newCustomerId, null, 0, date.toISOString());
+      // Create order with selected service
+      await addOrder(
+        orderCode,
+        newCustomerId,
+        selectedServiceId,
+        0,
+        date.toISOString(),
+      );
 
-      console.log("Order created successfully:", orderCode);
+      console.log(
+        "Order created successfully:",
+        orderCode,
+        "service_id:",
+        selectedServiceId,
+      );
 
       router.back();
     } catch (error) {
@@ -186,7 +244,10 @@ const AddCustomer = () => {
       />
 
       <ScrollView
-        contentContainerStyle={[{ backgroundColor: colors.background }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { backgroundColor: colors.background },
+        ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
         showsVerticalScrollIndicator={false}
@@ -195,7 +256,11 @@ const AddCustomer = () => {
           <Text style={[styles.title, { color: colors.textGold }]}>
             {isEditMode ? t("editCustomer") : t("addCustomer")}
           </Text>
+
           <View style={styles.form}>
+            {/* =========================
+                FIRST NAME
+            ========================= */}
             <InputField
               label={t("firstName")}
               placeholder={t("enterFirstName")}
@@ -216,6 +281,9 @@ const AddCustomer = () => {
               </Text>
             ) : null}
 
+            {/* =========================
+                PHONE
+            ========================= */}
             <InputField
               label={t("phone")}
               placeholder={t("enterPhone")}
@@ -236,6 +304,86 @@ const AddCustomer = () => {
               </Text>
             ) : null}
 
+            {/* =========================
+                SERVICE
+            ========================= */}
+            {!isEditMode && (
+              <View style={styles.serviceSection}>
+                <Text style={[styles.fieldLabel, { color: colors.text }]}>
+                  Service
+                </Text>
+
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.serviceList}
+                >
+                  {services.map((service) => {
+                    const selected = selectedServiceId === service.id;
+
+                    return (
+                      <Pressable
+                        key={service.id}
+                        onPress={() => {
+                          setSelectedServiceId(service.id);
+                          setServiceError("");
+                        }}
+                        style={[
+                          styles.serviceChip,
+                          {
+                            backgroundColor: selected
+                              ? colors.secondaryLight
+                              : colors.card,
+                            borderColor: selected
+                              ? colors.primary
+                              : colors.border,
+                          },
+                        ]}
+                      >
+                        <Ionicons
+                          name={
+                            (service.icon ||
+                              "shirt-outline") as keyof typeof Ionicons.glyphMap
+                          }
+                          size={20}
+                          color={
+                            selected ? colors.primary : colors.textSecondary
+                          }
+                        />
+
+                        <Text
+                          numberOfLines={1}
+                          style={{
+                            color: selected ? colors.primary : colors.text,
+                            fontWeight: selected ? "700" : "500",
+                          }}
+                        >
+                          {service.name}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+
+                {serviceError ? (
+                  <Text
+                    style={[
+                      styles.errorText,
+                      {
+                        color: colors.error,
+                        marginTop: 2,
+                      },
+                    ]}
+                  >
+                    {serviceError}
+                  </Text>
+                ) : null}
+              </View>
+            )}
+
+            {/* =========================
+                DUE DATE
+            ========================= */}
             <InputField
               label={t("dueDate")}
               placeholder={t("selectDate")}
@@ -254,6 +402,9 @@ const AddCustomer = () => {
               />
             )}
 
+            {/* =========================
+                ADVANCE AMOUNT
+            ========================= */}
             <InputField
               label={t("advanceAmount")}
               placeholder="Rs."
@@ -261,6 +412,10 @@ const AddCustomer = () => {
               value={advanceAmount}
               onChangeText={setAdvanceAmount}
             />
+
+            {/* =========================
+                ADDRESS
+            ========================= */}
             <InputField
               label={t("Address")}
               placeholder="Address"
@@ -270,6 +425,10 @@ const AddCustomer = () => {
               textAlignVertical="top"
               containerStyle={{ height: 120 }}
             />
+
+            {/* =========================
+                NOTES
+            ========================= */}
             <InputField
               containerStyle={{ height: 150 }}
               label={t("notes")}
@@ -280,6 +439,10 @@ const AddCustomer = () => {
               onChangeText={setNotes}
             />
           </View>
+
+          {/* =========================
+              BOTTOM SHEET
+          ========================= */}
           <Modal
             visible={modalVisible}
             transparent
@@ -388,6 +551,7 @@ const AddCustomer = () => {
               </Pressable>
             </Pressable>
           </Modal>
+
           <MainButton
             title={isEditMode ? t("updateCustomer") : t("saveCustomer")}
             onPress={handleSaveCustomer}
@@ -406,6 +570,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 30,
+  },
+
   main: {
     alignItems: "center",
   },
@@ -419,6 +588,32 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: 10,
     marginTop: 20,
+  },
+
+  serviceSection: {
+    marginTop: 8,
+    marginBottom: 10,
+  },
+
+  fieldLabel: {
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+
+  serviceList: {
+    gap: 10,
+    paddingBottom: 8,
+  },
+
+  serviceChip: {
+    minHeight: 46,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
 
   errorText: {
