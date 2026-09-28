@@ -1,7 +1,11 @@
-import { useLanguage } from "@/app/context/LanguageContext";
-import { useTheme } from "@/app/context/ThemeContext";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import { getUser } from "@/sqliteDB/auth";
-import { OrderWithCustomer, searchOrders } from "@/sqliteDB/order";
+import {
+  getRecentOrders,
+  OrderWithCustomer,
+  searchOrders,
+} from "@/sqliteDB/order";
 import {
   getServiceOrderCount,
   getServices,
@@ -10,9 +14,9 @@ import {
 import { theme } from "@/styles/theme";
 import { Spacer15 } from "@/Utils/spacing";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
-import React, { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   FlatList,
   ImageBackground,
@@ -27,11 +31,7 @@ import {
 import OrderCard from "./orderCard";
 import ServiceCard from "./ServiceCard";
 
-type GreetingsProps = {
-  orders: OrderWithCustomer[];
-};
-
-const Greetings = ({ orders }: GreetingsProps) => {
+const Greetings = () => {
   const { width } = useWindowDimensions();
   const { colors } = useTheme();
   const { t } = useLanguage();
@@ -39,25 +39,38 @@ const Greetings = ({ orders }: GreetingsProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<OrderWithCustomer[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [orders, setOrders] = useState<OrderWithCustomer[]>([]);
   const [serviceOrderCounts, setServiceOrderCounts] = useState<
     Record<number, number>
   >({});
+
   const [user, setUser] = useState<any>(null);
 
-  const loadUser = async () => {
+  const loadOrders = useCallback(async () => {
+    try {
+      const data = await getRecentOrders();
+      setOrders(data);
+    } catch (error) {
+      console.log("Failed to load orders", error);
+    }
+  }, []);
+
+  const loadUser = useCallback(async () => {
     try {
       const data = await getUser();
+
       if (data) {
         setUser(data);
       }
     } catch (error) {
       console.log("Failed to load user", error);
     }
-  };
+  }, []);
 
-  const loadServices = async () => {
+  const loadServices = useCallback(async () => {
     try {
       const data = await getServices();
+
       setServices(data);
 
       const counts: Record<number, number> = {};
@@ -72,12 +85,15 @@ const Greetings = ({ orders }: GreetingsProps) => {
     } catch (error) {
       console.log("Failed to load services", error);
     }
-  };
-
-  useEffect(() => {
-    loadServices();
-    loadUser();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadOrders();
+      loadServices();
+      loadUser();
+    }, [loadOrders, loadServices, loadUser]),
+  );
 
   const now = new Date();
   const hour = now.getHours();
@@ -336,8 +352,6 @@ const Greetings = ({ orders }: GreetingsProps) => {
         ]}
         imageStyle={styles.userCardImage}
       >
-        <View style={styles.imageOverlay} />
-
         <View style={styles.userDetails}>
           <Text
             style={[
@@ -499,7 +513,7 @@ const Greetings = ({ orders }: GreetingsProps) => {
         ) : (
           orders.map((order) => (
             <View key={order.id} style={styles.orderCardContainer}>
-              <OrderCard order={order} />
+              <OrderCard order={order} onStatusChanged={loadOrders} />
             </View>
           ))
         )}
@@ -655,11 +669,6 @@ const styles = StyleSheet.create({
   userCardImage: {
     resizeMode: "cover",
     borderRadius: 20,
-  },
-
-  imageOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.35)",
   },
 
   userDetails: {

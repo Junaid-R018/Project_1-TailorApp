@@ -1,12 +1,12 @@
-import { useLanguage } from "@/app/context/LanguageContext";
-import { useTheme } from "@/app/context/ThemeContext";
 import InputField from "@/components/inputField";
 import MainButton from "@/components/MainButton ";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import { getUser, updateUserProfile } from "@/sqliteDB/auth";
 import { theme } from "@/styles/theme";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, Stack } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,

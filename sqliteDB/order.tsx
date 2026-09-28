@@ -12,6 +12,7 @@ export type Order = {
   order_code: string;
   customer_id: number | null;
   service_id: number | null;
+  measurement_id: number | null;
   status: OrderStatus;
   amount: number;
   delivery_date: string | null;
@@ -27,6 +28,7 @@ export const getRecentOrders = async (): Promise<OrderWithCustomer[]> => {
       orders.order_code,
       orders.customer_id,
       orders.service_id,
+      orders.measurement_id,
       orders.status,
       orders.amount,
       orders.delivery_date,
@@ -52,6 +54,7 @@ export const addOrder = async (
   orderCode: string,
   customerId: number | null,
   serviceId: number | null,
+  measurement_id: number | null,
   amount: number,
   deliveryDate: string | null,
 ) => {
@@ -63,16 +66,18 @@ export const addOrder = async (
       order_code,
       customer_id,
       service_id,
+      measurement_id,
       status,
       amount,
       delivery_date,
       created_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `,
     orderCode,
     customerId,
     serviceId,
+    measurement_id,
     "New",
     amount,
     deliveryDate,
@@ -94,6 +99,7 @@ export const getAllOrders = async (): Promise<OrderWithCustomer[]> => {
       orders.order_code,
       orders.customer_id,
       orders.service_id,
+      orders.measurement_id,
       orders.status,
       orders.amount,
       orders.delivery_date,
@@ -128,6 +134,7 @@ export const searchOrders = async (
       orders.order_code,
       orders.customer_id,
       orders.service_id,
+      orders.measurement_id,
       orders.status,
       orders.amount,
       orders.delivery_date,
@@ -185,6 +192,7 @@ export const getOrdersByCustomerId = async (
       orders.order_code,
       orders.customer_id,
       orders.service_id,
+      orders.measurement_id,
       orders.status,
       orders.amount,
       orders.delivery_date,
@@ -208,4 +216,56 @@ export const getOrdersByCustomerId = async (
   console.log("Orders for customer:", customerId, orders);
 
   return orders;
+};
+
+export const getLatestOrderByCustomerId = async (
+  customerId: number,
+): Promise<Order | null> => {
+  const db = await getDatabase();
+
+  const order = await db.getFirstAsync<Order>(
+    `
+    SELECT *
+    FROM orders
+    WHERE customer_id = ?
+    ORDER BY id DESC
+    LIMIT 1
+    `,
+    customerId,
+  );
+
+  return order ?? null;
+};
+
+export const updateOrderMeasurement = async (
+  orderId: number,
+  measurementId: number,
+) => {
+  const db = await getDatabase();
+
+  return await db.runAsync(
+    `
+    UPDATE orders
+    SET measurement_id = ?
+    WHERE id = ?
+    `,
+    measurementId,
+    orderId,
+  );
+};
+export const getNextOrderCode = async (): Promise<string> => {
+  const database = await getDatabase();
+
+  const result = await database.getFirstAsync<{ id: number }>(
+    `
+    SELECT id
+    FROM orders
+    ORDER BY id DESC
+    LIMIT 1
+    `,
+  );
+
+  const nextId = (result?.id ?? 0) + 1;
+
+  return `ORD-${String(nextId).padStart(3, "0")}`;
 };

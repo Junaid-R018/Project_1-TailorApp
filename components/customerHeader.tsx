@@ -1,4 +1,4 @@
-import { useTheme } from "@/app/context/ThemeContext";
+import { useTheme } from "@/context/ThemeContext";
 import { Customer } from "@/sqliteDB/customer";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";

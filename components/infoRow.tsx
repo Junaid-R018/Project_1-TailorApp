@@ -24,8 +24,8 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    fontSize: 12,
-    color: theme.colors.light.textSecondary,
+    fontSize: theme.font.size.medium,
+    color: theme.colors.light.primary,
   },
 
   value: {

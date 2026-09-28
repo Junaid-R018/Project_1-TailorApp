@@ -1,10 +1,10 @@
-import { useLanguage } from "@/app/context/LanguageContext";
-import { useTheme } from "@/app/context/ThemeContext";
 import CustomerHeader from "@/components/customerHeader";
 import CustomerTabs from "@/components/customerTabs";
 import Measurements from "@/components/measurements";
 import Orders from "@/components/orders";
 import PersonalInfo from "@/components/personalInfo";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import { Customer, getCustomerById } from "@/sqliteDB/customer";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -53,9 +53,6 @@ export default function CustomerDetails() {
 
         try {
           const data = await getCustomerById(Number(customerId));
-
-          // console.log("Selected Customer:", data);
-
           setSelectedCustomer(data);
         } catch (error) {
           console.error("Failed to load customer:", error);
@@ -65,8 +62,6 @@ export default function CustomerDetails() {
       loadCustomer();
     }, [customerId]),
   );
-
-  // Loading state
   if (!selectedCustomer) {
     return (
       <>

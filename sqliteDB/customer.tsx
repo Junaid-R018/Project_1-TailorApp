@@ -8,7 +8,6 @@ export type Customer = {
   due_date: string | null;
   advance_amount: number;
   address: string | null;
-  notes: string | null;
   created_at: string;
 };
 
@@ -18,7 +17,6 @@ export const addCustomer = async (
   dueDate: string,
   advanceAmount: number,
   address: string,
-  notes: string,
 ) => {
   const database = await getDatabase();
 
@@ -30,10 +28,9 @@ export const addCustomer = async (
       due_date,
       advance_amount,
       address,
-      notes,
       created_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ? )
   `;
 
   const result = await database.runAsync(sql, [
@@ -42,7 +39,6 @@ export const addCustomer = async (
     dueDate,
     advanceAmount,
     address.trim(),
-    notes.trim(),
     new Date().toISOString(),
   ]);
 
@@ -87,7 +83,6 @@ export const updateCustomer = async (
   dueDate: string,
   advanceAmount: number,
   address: string,
-  notes: string,
 ) => {
   const db = await getDatabase();
 
@@ -100,7 +95,6 @@ export const updateCustomer = async (
       due_date = ?,
       advance_amount = ?,
       address = ?,
-      notes = ?
     WHERE id = ?
     `,
     [
@@ -109,7 +103,6 @@ export const updateCustomer = async (
       dueDate,
       advanceAmount,
       address.trim(),
-      notes.trim(),
       id,
     ],
   );

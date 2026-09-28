@@ -1,7 +1,6 @@
-import { useLanguage } from "@/app/context/LanguageContext";
-import { useTheme } from "@/app/context/ThemeContext";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import { Stack } from "expo-router";
-import React from "react";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MeasurementsScreen from "../measurement/new";

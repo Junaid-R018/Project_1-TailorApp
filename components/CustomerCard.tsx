@@ -1,8 +1,7 @@
-import { useTheme } from "@/app/context/ThemeContext";
+import { useTheme } from "@/context/ThemeContext";
 import { Customer } from "@/sqliteDB/customer";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
 interface CustomerCardProps {
@@ -10,6 +9,7 @@ interface CustomerCardProps {
   onPress: () => void;
   onLongPress: () => void;
   customerNumber: number;
+  onNewOrder?: () => void;
 }
 
 const CustomerCard = ({
@@ -17,6 +17,7 @@ const CustomerCard = ({
   customerNumber,
   onPress,
   onLongPress,
+  onNewOrder,
 }: CustomerCardProps) => {
   const { colors } = useTheme();
 
@@ -80,36 +81,48 @@ const CustomerCard = ({
       </View>
 
       <View style={styles.actionBtn}>
-        {/* WhatsApp */}
-        <Pressable
-          onPress={handleWhatsApp}
-          style={({ pressed }) => [
-            styles.icon,
-            pressed && [
-              styles.iconPressed,
+        <View style={styles.iconRow}>
+          <Pressable
+            onPress={handleWhatsApp}
+            style={({ pressed }) => [
+              styles.icon,
+              pressed && [
+                styles.iconPressed,
+                {
+                  backgroundColor: colors.disabledBackground,
+                },
+              ],
+            ]}
+          >
+            <Ionicons name="logo-whatsapp" size={24} color={colors.success} />
+          </Pressable>
+          <Pressable
+            onPress={handleCall}
+            style={({ pressed }) => [
+              styles.icon,
+              pressed && [
+                styles.iconPressed,
+                {
+                  backgroundColor: colors.disabledBackground,
+                },
+              ],
+            ]}
+          >
+            <Ionicons name="call" size={24} color={"red"} />
+          </Pressable>
+        </View>
+        <Pressable onPress={onNewOrder} style={styles.newOrder} hitSlop={15}>
+          <Ionicons name="add-circle-outline" size={20} color={colors.text} />
+          <Text
+            style={[
+              styles.newOrderText,
               {
-                backgroundColor: colors.disabledBackground,
+                color: colors.text,
               },
-            ],
-          ]}
-        >
-          <Ionicons name="logo-whatsapp" size={24} color={colors.success} />
-        </Pressable>
-
-        {/* Call */}
-        <Pressable
-          onPress={handleCall}
-          style={({ pressed }) => [
-            styles.icon,
-            pressed && [
-              styles.iconPressed,
-              {
-                backgroundColor: colors.disabledBackground,
-              },
-            ],
-          ]}
-        >
-          <Ionicons name="call" size={24} color={colors.error} />
+            ]}
+          >
+            New Order
+          </Text>
         </Pressable>
       </View>
     </Pressable>
@@ -161,21 +174,41 @@ const styles = StyleSheet.create({
   },
 
   actionBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
+    alignItems: "flex-end",
     marginLeft: 10,
   },
 
   icon: {
     width: 36,
     height: 36,
-    justifyContent: "center",
+    // justifyContent: "center",
     alignItems: "center",
     borderRadius: theme.radius.round,
   },
 
   iconPressed: {
     opacity: 0.7,
+  },
+  iconRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  newOrder: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: theme.colors.dark.border,
+    borderRadius: theme.radius.large,
+    elevation: 5,
+    paddingHorizontal: 10,
+    backgroundColor: theme.colors.light.background,
+    justifyContent: "center",
+    gap: 5,
+    marginTop: 5,
+  },
+  newOrderText: {
+    fontSize: theme.font.size.small,
+    fontWeight: "600",
   },
 });

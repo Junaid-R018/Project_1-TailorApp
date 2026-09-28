@@ -12,7 +12,6 @@ export const setLoginStatus = async (status: boolean) => {
   }
 };
 
-// Get login status
 export const getLoginStatus = async (): Promise<boolean> => {
   try {
     const status = await AsyncStorage.getItem(LOGIN_KEY);

@@ -1,10 +1,10 @@
-import { useTheme } from "@/app/context/ThemeContext";
 import OrderCard from "@/components/orderCard";
+import { useTheme } from "@/context/ThemeContext";
 import { getAllOrders, OrderStatus, OrderWithCustomer } from "@/sqliteDB/order";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Pressable,
@@ -43,7 +43,6 @@ export default function OrdersScreen() {
       setLoading(true);
 
       const data = await getAllOrders();
-
       setOrders(data);
     } catch (error) {
       console.error("Failed to load orders:", error);
@@ -58,7 +57,6 @@ export default function OrdersScreen() {
 
   const filteredOrders = useMemo(() => {
     let result = [...orders];
-
     // Status filter
     if (selectedStatus !== "All") {
       result = result.filter((order) => order.status === selectedStatus);
@@ -268,7 +266,7 @@ export default function OrdersScreen() {
           }
           renderItem={({ item }) => (
             <View style={styles.orderItem}>
-              <OrderCard order={item} />
+              <OrderCard order={item} onStatusChanged={loadOrders} />
             </View>
           )}
           ListEmptyComponent={
@@ -332,18 +330,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-
-  // ---------------- HEADER ----------------
-
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
     gap: 18,
     marginRight: 4,
   },
-
-  // ---------------- LIST ----------------
-
   listContent: {
     paddingTop: 12,
     paddingHorizontal: 16,
@@ -354,13 +346,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  // ---------------- TOP SECTION ----------------
-
   topSection: {
     marginBottom: 4,
   },
-
-  // ---------------- SEARCH ----------------
 
   searchContainer: {
     minHeight: 52,
@@ -385,26 +373,18 @@ const styles = StyleSheet.create({
 
     fontSize: 14,
   },
-
-  // ---------------- FILTERS ----------------
-
   filterContainer: {
     paddingVertical: 4,
     paddingRight: 10,
-
     gap: 10,
   },
 
   filterButton: {
     minWidth: 72,
     height: 38,
-
     paddingHorizontal: 17,
-
     borderRadius: theme.radius.xxl,
-
     borderWidth: 1,
-
     alignItems: "center",
     justifyContent: "center",
   },

@@ -1,9 +1,9 @@
 import { measurementSections } from "@/Utils/measurementData";
 import { Spacer40 } from "@/Utils/spacing";
-import { useLanguage } from "@/app/context/LanguageContext";
-import { useTheme } from "@/app/context/ThemeContext";
 import MainButton from "@/components/MainButton ";
 import InputField from "@/components/inputField";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import {
   MeasurementRecord,
   addMeasurement,
@@ -11,10 +11,14 @@ import {
   getLatestMeasurement,
   updateMeasurement,
 } from "@/sqliteDB/measurement";
+import {
+  getLatestOrderByCustomerId,
+  updateOrderMeasurement,
+} from "@/sqliteDB/order";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Stack, router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -51,14 +55,14 @@ const MeasurementsScreen = () => {
 
   const customerId = Number(params.customerId);
 
-  const mode = params.mode === "new" ? "new" : "edit";
+  const mode = params.mode === "edit" ? "edit" : "new";
 
   const measurementId = params.measurementId
     ? Number(params.measurementId)
     : null;
 
   const [unit, setUnit] = useState<Unit>("inch");
-  const [openSection, setOpenSection] = useState("shirt");
+  const [openSection, setOpenSection] = useState("");
   const [measurements, setMeasurements] =
     useState<Measurements>(emptyMeasurements);
   const [editingMeasurementId, setEditingMeasurementId] = useState<
@@ -144,6 +148,7 @@ const MeasurementsScreen = () => {
         console.log("Customer ID is missing");
         return;
       }
+      let savedMeasurementId: number;
 
       if (mode === "edit" && editingMeasurementId) {
         await updateMeasurement(
@@ -153,13 +158,30 @@ const MeasurementsScreen = () => {
           others,
         );
 
-        console.log("Measurement updated successfully");
-      } else {
-        await addMeasurement(customerId, measurements, unit, others);
+        savedMeasurementId = editingMeasurementId;
 
-        console.log("Measurement saved successfully");
+        console.log("Measurement updated", savedMeasurementId);
+      } else {
+        savedMeasurementId = await addMeasurement(
+          customerId,
+          measurements,
+          unit,
+          others,
+        );
+
+        console.log("Measurement saved successfully", savedMeasurementId);
       }
 
+      const latestOrder = await getLatestOrderByCustomerId(customerId);
+      if (latestOrder) {
+        await updateOrderMeasurement(latestOrder.id, savedMeasurementId);
+        console.log(
+          "Measurement linked to order:",
+          latestOrder.id,
+          "measurement:",
+          savedMeasurementId,
+        );
+      }
       router.back();
     } catch (error) {
       console.log("Failed to save measurement:", error);

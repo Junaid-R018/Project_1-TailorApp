@@ -1,4 +1,4 @@
-import { useTheme } from "@/app/context/ThemeContext";
+import { useTheme } from "@/context/ThemeContext";
 import {
   OrderStatus,
   OrderWithCustomer,
@@ -6,11 +6,12 @@ import {
 } from "@/sqliteDB/order";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
 interface OrderCardProps {
   order: OrderWithCustomer;
+  onStatusChanged?: () => void;
 }
 
 const statuses: OrderStatus[] = [
@@ -21,7 +22,7 @@ const statuses: OrderStatus[] = [
   "Cancelled",
 ];
 
-export default function OrderCard({ order }: OrderCardProps) {
+export default function OrderCard({ order, onStatusChanged }: OrderCardProps) {
   const { colors } = useTheme();
 
   const [statusModalVisible, setStatusModalVisible] = useState(false);
@@ -47,13 +48,9 @@ export default function OrderCard({ order }: OrderCardProps) {
       setUpdating(true);
 
       await updateOrderStatus(order.id, status);
-
-      setStatusModalVisible(false);
-
       console.log(`Order ${order.order_code} status changed to ${status}`);
-
-      // Important:
-      // The Orders screen should reload its orders after this.
+      setStatusModalVisible(false);
+      onStatusChanged?.();
     } catch (error) {
       console.error("Failed to update order status:", error);
     } finally {

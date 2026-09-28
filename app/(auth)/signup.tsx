@@ -1,13 +1,13 @@
 import InputField from "@/components/inputField";
 import MainButton from "@/components/MainButton ";
-import { saveUser } from "@/sqliteDB/auth";
+import { getUser, saveUser } from "@/sqliteDB/auth";
 import { theme } from "@/styles/theme";
 import { useLoading } from "@/Utils/loading";
 import { Spacer10, Spacer30 } from "@/Utils/spacing";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Checkbox } from "expo-checkbox";
 import { router, Stack } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -19,8 +19,8 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
-import { useLanguage } from "../context/LanguageContext";
-import { useTheme } from "../context/ThemeContext";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 
 const SignUp = () => {
   const { colors } = useTheme();
@@ -49,6 +49,13 @@ const SignUp = () => {
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
     const trimmedPhone = phone.trim();
+
+    const existingUser = await getUser(phone);
+
+    if (existingUser) {
+      setPhoneError(t("PhoneAlreadyExists"));
+      return;
+    }
 
     const errors = {
       firstName: trimmedFirstName ? "" : t("firstNameRequired"),
@@ -98,8 +105,6 @@ const SignUp = () => {
         phone: trimmedPhone,
         password,
       };
-
-      // Database logic remains unchanged
       await saveUser(user);
 
       Toast.show({
@@ -224,6 +229,7 @@ const SignUp = () => {
           {/* Phone */}
           <InputField
             style={styles.input}
+            maxLength={11}
             label={t("phoneNumber")}
             placeholder={t("enterPhone")}
             keyboardType="phone-pad"

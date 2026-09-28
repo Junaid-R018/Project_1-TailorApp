@@ -1,4 +1,4 @@
-import { useTheme } from "@/app/context/ThemeContext";
+import { useTheme } from "@/context/ThemeContext";
 import {
   getAllServices,
   getServiceOrderCount,
@@ -8,7 +8,7 @@ import {
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,

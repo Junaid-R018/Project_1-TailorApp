@@ -1,5 +1,5 @@
-import { useLanguage } from "@/app/context/LanguageContext";
-import { useTheme } from "@/app/context/ThemeContext";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import { theme } from "@/styles/theme";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 interface CustomerTabsProps {

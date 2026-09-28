@@ -1,9 +1,12 @@
 import CustomerCard from "@/components/CustomerCard";
+import NewOrderModal from "@/components/NewOrderModal";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import { Customer, deleteCustomer, getCustomers } from "@/sqliteDB/customer";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack, useFocusEffect } from "expo-router";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -14,21 +17,16 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useLanguage } from "../context/LanguageContext";
-import { useTheme } from "../context/ThemeContext";
-
 const Customers = () => {
   const { colors } = useTheme();
   const { t } = useLanguage();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadCustomers();
-    }, []),
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null,
   );
+  const [orderModalVisible, setorderModalVisible] = useState(false);
 
   const loadCustomers = async () => {
     try {
@@ -44,6 +42,11 @@ const Customers = () => {
     }
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      loadCustomers();
+    }, []),
+  );
   const addCustomer = () => {
     router.push("/customer/add");
   };
@@ -139,11 +142,22 @@ const Customers = () => {
                   },
                 })
               }
+              onNewOrder={() => {
+                setSelectedCustomer(item);
+                setorderModalVisible(true);
+              }}
             />
           )}
         />
       )}
-
+      <NewOrderModal
+        visible={orderModalVisible}
+        customer={selectedCustomer}
+        onClose={() => {
+          setorderModalVisible(false);
+          setSelectedCustomer(null);
+        }}
+      />
       <Pressable
         style={({ pressed }) => [
           styles.floatingButton,

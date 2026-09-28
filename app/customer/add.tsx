@@ -1,20 +1,20 @@
-import { useLanguage } from "@/app/context/LanguageContext";
-import { useTheme } from "@/app/context/ThemeContext";
 import InputField from "@/components/inputField";
 import MainButton from "@/components/MainButton ";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import {
   addCustomer,
   getCustomerById,
   updateCustomer,
 } from "@/sqliteDB/customer";
+import { getLatestMeasurement } from "@/sqliteDB/measurement";
 import { addOrder } from "@/sqliteDB/order";
 import { getServices, Service } from "@/sqliteDB/services";
-
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -38,23 +38,17 @@ const AddCustomer = () => {
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
 
-  // =========================
-  // SERVICES
-  // =========================
   const [services, setServices] = useState<Service[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState<number | null>(
     null,
   );
-  const [serviceError, setServiceError] = useState("");
 
+  const [serviceError, setServiceError] = useState("");
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
 
   const [advanceAmount, setAdvanceAmount] = useState("");
-  const [notes, setNotes] = useState("");
-
   const [modalVisible, setModalVisible] = useState(false);
-
   const { customerId, mode } = useLocalSearchParams<{
     customerId?: string;
     mode?: string;
@@ -62,9 +56,6 @@ const AddCustomer = () => {
 
   const isEditMode = mode === "edit";
 
-  // =========================
-  // LOAD CUSTOMER + SERVICES
-  // =========================
   useEffect(() => {
     const loadCustomer = async () => {
       if (!isEditMode || !customerId) return;
@@ -78,8 +69,6 @@ const AddCustomer = () => {
         setPhone(customer.phone || "");
         setAdvanceAmount(customer.advance_amount?.toString() || "");
         setAddress(customer.address || "");
-        setNotes(customer.notes || "");
-
         if (customer.due_date) {
           setDate(new Date(customer.due_date));
         }
@@ -93,11 +82,7 @@ const AddCustomer = () => {
     const loadServices = async () => {
       try {
         const data = await getServices();
-
         setServices(data);
-
-        // Don't automatically select a service.
-        // User must choose the service when creating a new order.
       } catch (error) {
         console.error("Failed to load services:", error);
       }
@@ -107,9 +92,6 @@ const AddCustomer = () => {
     loadServices();
   }, [isEditMode, customerId]);
 
-  // =========================
-  // DATE
-  // =========================
   const handleDate = (event: any, selectedDate?: Date) => {
     setShowPicker(false);
 
@@ -118,13 +100,8 @@ const AddCustomer = () => {
     }
   };
 
-  // =========================
-  // SAVE CUSTOMER
-  // =========================
   const handleSaveCustomer = async () => {
     let hasError = false;
-
-    // First name validation
     if (!firstName.trim()) {
       setFirstNameError(t("firstNameRequired"));
       hasError = true;
@@ -132,15 +109,13 @@ const AddCustomer = () => {
       setFirstNameError("");
     }
 
-    // Phone validation
-    if (!phone.trim()) {
+    if (!phone.trim() || phone.length !== 11) {
       setPhoneError(t("phoneRequired"));
       hasError = true;
     } else {
       setPhoneError("");
     }
 
-    // Service is required only for a NEW customer/order
     if (!isEditMode && !selectedServiceId) {
       setServiceError("Please select a service");
       hasError = true;
@@ -153,9 +128,6 @@ const AddCustomer = () => {
     }
 
     try {
-      // =========================
-      // EDIT CUSTOMER
-      // =========================
       if (isEditMode && customerId) {
         await updateCustomer(
           Number(customerId),
@@ -164,36 +136,29 @@ const AddCustomer = () => {
           date.toISOString(),
           Number(advanceAmount) || 0,
           address,
-          notes,
         );
 
         console.log("Customer updated successfully");
-
         router.back();
         return;
       }
 
-      // =========================
-      // ADD NEW CUSTOMER
-      // =========================
       const newCustomerId = await addCustomer(
         firstName,
         phone,
         date.toISOString(),
         Number(advanceAmount) || 0,
         address,
-        notes,
       );
-
       console.log("Customer saved successfully:", newCustomerId);
 
+      const latestMeasurement = await getLatestMeasurement(newCustomerId);
       const orderCode = `ORD-${String(newCustomerId).padStart(3, "0")}`;
-
-      // Create order with selected service
       await addOrder(
         orderCode,
         newCustomerId,
         selectedServiceId,
+        latestMeasurement?.id ?? null,
         0,
         date.toISOString(),
       );
@@ -258,9 +223,6 @@ const AddCustomer = () => {
           </Text>
 
           <View style={styles.form}>
-            {/* =========================
-                FIRST NAME
-            ========================= */}
             <InputField
               label={t("firstName")}
               placeholder={t("enterFirstName")}
@@ -280,14 +242,11 @@ const AddCustomer = () => {
                 {firstNameError}
               </Text>
             ) : null}
-
-            {/* =========================
-                PHONE
-            ========================= */}
             <InputField
               label={t("phone")}
               placeholder={t("enterPhone")}
               keyboardType="phone-pad"
+              maxLength={11}
               value={phone}
               onChangeText={(text) => {
                 setPhone(text);
@@ -303,10 +262,6 @@ const AddCustomer = () => {
                 {phoneError}
               </Text>
             ) : null}
-
-            {/* =========================
-                SERVICE
-            ========================= */}
             {!isEditMode && (
               <View style={styles.serviceSection}>
                 <Text style={[styles.fieldLabel, { color: colors.text }]}>
@@ -380,10 +335,6 @@ const AddCustomer = () => {
                 ) : null}
               </View>
             )}
-
-            {/* =========================
-                DUE DATE
-            ========================= */}
             <InputField
               label={t("dueDate")}
               placeholder={t("selectDate")}
@@ -398,13 +349,9 @@ const AddCustomer = () => {
                 value={date}
                 mode="date"
                 display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={handleDate}
+                onValueChange={handleDate}
               />
             )}
-
-            {/* =========================
-                ADVANCE AMOUNT
-            ========================= */}
             <InputField
               label={t("advanceAmount")}
               placeholder="Rs."
@@ -412,10 +359,6 @@ const AddCustomer = () => {
               value={advanceAmount}
               onChangeText={setAdvanceAmount}
             />
-
-            {/* =========================
-                ADDRESS
-            ========================= */}
             <InputField
               label={t("Address")}
               placeholder="Address"
@@ -425,24 +368,7 @@ const AddCustomer = () => {
               textAlignVertical="top"
               containerStyle={{ height: 120 }}
             />
-
-            {/* =========================
-                NOTES
-            ========================= */}
-            <InputField
-              containerStyle={{ height: 150 }}
-              label={t("notes")}
-              placeholder={t("typeHere")}
-              textAlignVertical="top"
-              multiline={true}
-              value={notes}
-              onChangeText={setNotes}
-            />
           </View>
-
-          {/* =========================
-              BOTTOM SHEET
-          ========================= */}
           <Modal
             visible={modalVisible}
             transparent

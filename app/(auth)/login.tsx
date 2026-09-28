@@ -6,7 +6,7 @@ import { setLoginStatus } from "@/Utils/authStorage";
 import { Spacer10 } from "@/Utils/spacing";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -18,9 +18,9 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
+import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useLanguage } from "../context/LanguageContext";
-import { useTheme } from "../context/ThemeContext";
 
 const Login = () => {
   const { colors } = useTheme();
@@ -159,6 +159,7 @@ const Login = () => {
           <InputField
             label={t("phoneNumber")}
             value={number}
+            maxLength={11}
             onChangeText={(text) => {
               setNumber(text);
 

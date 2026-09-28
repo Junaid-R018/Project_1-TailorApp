@@ -1,6 +1,6 @@
 import Greetings from "@/components/Greetings";
-import { getRecentOrders, Order } from "@/sqliteDB/order";
-import React, { useEffect, useState } from "react";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -8,27 +8,10 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { useLanguage } from "../context/LanguageContext";
-import { useTheme } from "../context/ThemeContext";
 
 const Home = () => {
   const { colors } = useTheme();
   const { t } = useLanguage();
-
-  const [orders, setOrders] = useState<Order[]>([]);
-
-  useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        const data = await getRecentOrders();
-        setOrders(data);
-      } catch (error) {
-        console.log("failed to load orders", error);
-      }
-    };
-
-    loadOrders();
-  }, []);
 
   return (
     <KeyboardAvoidingView
@@ -53,7 +36,7 @@ const Home = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.content}>
-          <Greetings orders={orders} />
+          <Greetings />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

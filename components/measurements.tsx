@@ -1,5 +1,5 @@
-import { useLanguage } from "@/app/context/LanguageContext";
-import { useTheme } from "@/app/context/ThemeContext";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import { Customer } from "@/sqliteDB/customer";
 import {
   getCustomerMeasurements,

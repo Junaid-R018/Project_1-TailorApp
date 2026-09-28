@@ -1,12 +1,12 @@
-import { useLanguage } from "@/app/context/LanguageContext";
-import { useTheme } from "@/app/context/ThemeContext";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import { getUser } from "@/sqliteDB/auth";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { router, Stack } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -385,8 +385,8 @@ export default function ProfileScreen() {
               style={styles.menuItem}
               onPress={() => handleMenuPress("logout")}
             >
-              <Ionicons name="log-out-outline" size={20} color={colors.error} />
-              <Text style={[styles.menuText, { color: colors.error }]}>
+              <Ionicons name="log-out-outline" size={20} color={"red"} />
+              <Text style={[styles.menuText, { color: "red" }]}>
                 {t("logout")}
               </Text>
             </Pressable>
@@ -492,6 +492,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
-  menuText: { fontSize: theme.font.size.small, fontWeight: "600" },
+  menuText: {
+    fontSize: theme.font.size.small,
+    fontWeight: "600",
+  },
   menuDivider: { height: 1, elevation: 5 },
 });

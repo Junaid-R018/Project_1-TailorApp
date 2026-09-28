@@ -1,12 +1,14 @@
 import InputField from "@/components/inputField";
 import MainButton from "@/components/MainButton ";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import { updatePassword } from "@/sqliteDB/auth";
 import { theme } from "@/styles/theme";
 import { useLoading } from "@/Utils/loading";
 import { Spacer20 } from "@/Utils/spacing";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -17,9 +19,6 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
-
-import { useLanguage } from "../context/LanguageContext";
-import { useTheme } from "../context/ThemeContext";
 
 const ForgetPasswordScreen = () => {
   const { colors } = useTheme();

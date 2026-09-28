@@ -1,8 +1,7 @@
-import { useTheme } from "@/app/context/ThemeContext";
+import { useTheme } from "@/context/ThemeContext";
 import { Service } from "@/sqliteDB/services";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 type Props = {

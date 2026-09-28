@@ -1,7 +1,6 @@
-import { useTheme } from "@/app/context/ThemeContext";
+import { useTheme } from "@/context/ThemeContext";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Stack } from "expo-router";
-import React from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 type Payment = {

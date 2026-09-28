@@ -1,21 +1,30 @@
-import { useTheme } from "@/app/context/ThemeContext";
-import { theme } from "@/styles/theme";
-import { Notification } from "@/Utils/notificationData";
+import { useTheme } from "@/context/ThemeContext";
+import { NotificationRecord } from "@/sqliteDB/notification";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 type NotificationCardProps = {
-  notificationData: Notification;
+  notificationData: NotificationRecord;
+  onDelete: (id: number) => void;
+  onPress: (id: number) => void;
 };
 
-const NotificationCard = ({ notificationData }: NotificationCardProps) => {
+const NotificationCard = ({
+  notificationData,
+  onDelete,
+  onPress,
+}: NotificationCardProps) => {
   const { colors } = useTheme();
 
   const styles = createStyles(colors);
 
+  const isUnread = notificationData.is_read === 0;
+
   return (
-    <View style={[styles.card, !notificationData.read && styles.unreadCard]}>
+    <Pressable
+      onPress={() => onPress(notificationData.id)}
+      style={[styles.card, isUnread && styles.unreadCard]}
+    >
       <View style={styles.leftBorder} />
 
       <View style={styles.iconContainer}>
@@ -28,27 +37,43 @@ const NotificationCard = ({ notificationData }: NotificationCardProps) => {
             {notificationData.title}
           </Text>
 
-          {!notificationData.read && <View style={styles.unreadDot} />}
+          {isUnread && <View style={styles.unreadDot} />}
         </View>
 
         <Text style={styles.message} numberOfLines={2}>
           {notificationData.message}
         </Text>
 
-        <Text style={styles.time}>{notificationData.time}</Text>
+        <Text style={styles.time}>
+          {formatNotificationTime(notificationData.created_at)}
+        </Text>
       </View>
-    </View>
+
+      <Pressable
+        onPress={() => onDelete(notificationData.id)}
+        hitSlop={10}
+        style={styles.deleteButton}
+      >
+        <Ionicons name="trash-outline" size={24} color={colors.error} />
+      </Pressable>
+    </Pressable>
   );
 };
 
 export default NotificationCard;
+
+const formatNotificationTime = (dateString: string) => {
+  const date = new Date(dateString);
+
+  return date.toLocaleString();
+};
 
 const createStyles = (colors: any) =>
   StyleSheet.create({
     card: {
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: theme.colors.light.card,
+      backgroundColor: colors.card,
       marginHorizontal: 15,
       marginVertical: 6,
       borderRadius: 12,
@@ -64,7 +89,7 @@ const createStyles = (colors: any) =>
     },
 
     unreadCard: {
-      backgroundColor: theme.colors.light.divider,
+      backgroundColor: colors.divider,
     },
 
     leftBorder: {
@@ -115,10 +140,15 @@ const createStyles = (colors: any) =>
     },
 
     unreadDot: {
-      width: 12,
-      height: 12,
+      width: 10,
+      height: 10,
       borderRadius: 999,
       backgroundColor: colors.primary,
       marginLeft: 8,
+    },
+
+    deleteButton: {
+      padding: 12,
+      marginRight: 4,
     },
   });

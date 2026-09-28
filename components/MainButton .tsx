@@ -1,6 +1,5 @@
-import { useTheme } from "@/app/context/ThemeContext";
+import { useTheme } from "@/context/ThemeContext";
 import { theme } from "@/styles/theme";
-import React from "react";
 import {
   ActivityIndicator,
   Pressable,

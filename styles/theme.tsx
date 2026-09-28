@@ -70,7 +70,7 @@ export const theme = {
       successLight: "#E8F5E9",
       warning: "#ED6C02",
       warningLight: "#FFF3E0",
-      error: "#D32F2F",
+      error: "#fff",
       errorLight: "#FFEBEE",
       info: "#1976D2",
       infoLight: "#E3F2FD",

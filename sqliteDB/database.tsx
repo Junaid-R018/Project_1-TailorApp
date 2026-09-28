@@ -92,12 +92,36 @@ export const initDatabase = async () => {
       order_code TEXT NOT NULL UNIQUE,
       customer_id INTEGER,
       service_id INTEGER,
+      measurement_id INTEGER,
       status TEXT NOT NULL DEFAULT 'New',
       amount REAL NOT NULL DEFAULT 0,
       delivery_date TEXT,
       created_at TEXT NOT NULL
     );
   `);
+  // =========================
+  // ORDERS TABLE MIGRATION
+  // =========================
+  try {
+    const columns = await database.getAllAsync<{ name: string }>(
+      `PRAGMA table_info(orders);`,
+    );
+
+    const hasMeasurementId = columns.some(
+      (column) => column.name === "measurement_id",
+    );
+
+    if (!hasMeasurementId) {
+      await database.execAsync(`
+        ALTER TABLE orders
+        ADD COLUMN measurement_id INTEGER;
+      `);
+
+      console.log("measurement_id column added successfully");
+    }
+  } catch (error) {
+    console.error("Failed to migrate orders table:", error);
+  }
   // =========================
   // Measurements data
   // =========================
@@ -112,6 +136,18 @@ export const initDatabase = async () => {
     FOREIGN KEY (customer_id) REFERENCES customers(id)
   );
 `);
+
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS Notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      type TEXT NOT NULL,
+      reference_id INTEGER,
+      is_read INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL
+    );
+  `);
 
   // =========================
   // DEFAULT SERVICES

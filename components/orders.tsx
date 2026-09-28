@@ -1,5 +1,5 @@
-import { useLanguage } from "@/app/context/LanguageContext";
-import { useTheme } from "@/app/context/ThemeContext";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import { Customer } from "@/sqliteDB/customer";
 import { getOrdersByCustomerId } from "@/sqliteDB/order";
 import { theme } from "@/styles/theme";
@@ -22,23 +22,23 @@ export default function Orders({ customer }: OrdersProps) {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const loadOrders = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await getOrdersByCustomerId(customer.id);
+
+      setOrders(data);
+    } catch (error) {
+      console.log("Failed to load customer orders", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [customer.id]);
+
   useFocusEffect(
     useCallback(() => {
-      const loadOrders = async () => {
-        try {
-          setLoading(true);
-          const data = await getOrdersByCustomerId(customer.id);
-          // console.log("Orders for customer:", customer.id, data);
-
-          setOrders(data);
-        } catch (error) {
-          console.error("Failed to load customer orders:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
       loadOrders();
-    }, [customer.id]),
+    }, [loadOrders]),
   );
   return (
     <View style={[styles.page, { backgroundColor: colors.background }]}>
@@ -62,7 +62,9 @@ export default function Orders({ customer }: OrdersProps) {
         <FlatList
           data={orders}
           keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => <OrderCard order={item} />}
+          renderItem={({ item }) => (
+            <OrderCard order={item} onStatusChanged={loadOrders} />
+          )}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
         />

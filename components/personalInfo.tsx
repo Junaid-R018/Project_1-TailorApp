@@ -1,5 +1,5 @@
-import { useLanguage } from "@/app/context/LanguageContext";
-import { useTheme } from "@/app/context/ThemeContext";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import { Customer } from "@/sqliteDB/customer";
 import { theme } from "@/styles/theme";
 import { StyleSheet, Text, View } from "react-native";
@@ -25,10 +25,10 @@ export default function PersonalInfo({ customer }: PersonalInfoProps) {
       <InfoRow label={t("customerName")} value={customer.first_name} />
       <InfoRow label={t("phone")} value={customer.phone} />
       <InfoRow
-        label={t("advance Amount")}
+        label={t("Advance Amount")}
         value={String(customer.advance_amount)}
       />
-      <InfoRow label={t("address")} value={customer.address ?? ""} />
+      <InfoRow label={t("Address")} value={customer.address ?? ""} />
       <InfoRow
         label={t("customerSince")}
         value={formatDate(customer.created_at)}

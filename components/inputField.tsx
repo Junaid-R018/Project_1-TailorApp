@@ -1,7 +1,7 @@
-import { useTheme } from "@/app/context/ThemeContext";
+import { useTheme } from "@/context/ThemeContext";
 import { theme } from "@/styles/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 import {
   Pressable,
   StyleSheet,
